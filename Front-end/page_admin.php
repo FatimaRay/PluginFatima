@@ -75,21 +75,7 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
                                         <td>{$entrees->created_at}</td>
                                     </tr>";
             }
-            // if (isset($_POST['trash']) && !empty($_POST['prospects_ids'])) {
-            //     $prospects_ids = array_map('intval', $_POST['prospects_ids']);
-            //     $placeholders = implode(',', array_fill(0, count($prospects_ids), '%d'));
-                
-            //     // Préparer la requête de mise à jour pour marquer les prospects comme supprimés (deleted = 1)
-            //     $result=$wpdb->query(
-            //         $wpdb->prepare("UPDATE $table_name SET deleted = 1 WHERE id IN ($placeholders)", ...$prospects_ids)
-            //     );
-            //     if($result===false){
-            //         error_log('Erreur de mise à jour dans la table : ' . $wpdb->last_error);
-            //     }
-            //     // Rediriger pour éviter la soumission multiple du formulaire
-            //     wp_redirect($_SERVER['REQUEST_URI']);
-            //     exit();
-            // }
+         
             if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Vérifie si le bouton de suppression est bien cliqué
                 if (isset($_POST['trash']) && !empty($_POST['prospects_ids'])) {

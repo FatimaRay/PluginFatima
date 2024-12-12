@@ -1,5 +1,5 @@
 .fg_plugin{
-    margin-bottom: 20px !important;
+    margin-bottom: 20px;
     border: none; 
     padding: 20px;          
     width: 480px;
@@ -8,9 +8,17 @@
     background-color: #FFFFFF;
     align-items: center;
     box-shadow: 0px 15px 50px rgba(0, 0, 0, 0.15);
-    /* transition: height 0.3s ease-in-out;
-    display: flex;
-    flex-direction: column; */
+    transition: all 0.3s ease;
+}
+.enlarged {
+    height: auto; /* Permet au formulaire de s'agrandir automatiquement */
+    padding: 20px; /* Ajustez le remplissage si nécessaire */
+    border: 1px solid #ccc; /* Ajoutez une bordure pour la visibilité */
+}
+.reduced{
+    transition: all 0.3s ease; /* Animation douce */
+    transform: scale(0.8); /* Réduit la taille à 80% */
+    opacity: 0.5 ; /* Rend le formulaire un peu transparent */
 }
 .fg_plugin h4 pre{
     color: rgb(236, 8, 8);
@@ -52,3 +60,4 @@ body{
     font-size: 18px !important; 
     color:red !important;
 }
+

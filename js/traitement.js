@@ -1,8 +1,9 @@
 document.getElementById('fg_form').addEventListener('submit', function(event) {
     event.preventDefault(); // Empêche la soumission normale du formulaire
-    console.log("Formulaire soumis !") ;
-    envoyerFormulaire();
+    console.log("Formulaire soumis !");
+    recupererFormulaire(); // Appeler la bonne fonction
 });
+
 function recupererFormulaire() {
     console.log("Fonction appelée !");
     // Récupérer les valeurs du formulaire
@@ -36,11 +37,13 @@ function recupererFormulaire() {
         document.getElementById('erreur_email').textContent = erreurs.email || '';
         document.getElementById('erreur_statut').textContent = erreurs.statut || '';
         document.getElementById('erreur_produit').textContent = erreurs.produit || '';
-        document.getElementById("message_global").innerHTML = "Veuillez corriger les erreurs avant d\'envoyer ce formulaire";
+
+         // Agrandir le formulaire
+       var formContainer = document.querySelector('.fg_plugin');
+       formContainer.classList.add('enlarged');
+       document.getElementById("message_global").innerHTML = "Veuillez corriger les erreurs avant d\'envoyer ce formulaire";
 
         return; // Arrêter l'envoi du formulaire si erreurs
-    }else{
-        
     }
 
     function validateEmail(email) {
@@ -51,7 +54,7 @@ function recupererFormulaire() {
     // Désactiver le bouton de soumission
     var boutonSubmit = document.querySelector('.fg_submit');
     boutonSubmit.disabled = true;
-    // // boutonSubmit.value = "Envoi en cours...";
+    boutonSubmit.value = "en cours de traitement...";
     
     // Créer un objet FormData avec les valeurs du formulaire
 
@@ -79,10 +82,32 @@ function recupererFormulaire() {
             document.getElementById('erreur_produit').textContent = data.erreurs.produit || '';
             document.getElementById('message_global').textContent = data.message_global || '';
             ajusterHauteurFormulaire();
+
         } else if (data.success) {
-            // Afficher un message de succès
+            // Masquer tous les champs du formulaire
+            var inputs = document.querySelectorAll('#fg_form input, #fg_form select, #fg_form .fg_submit');
+            inputs.forEach(input => {
+                input.style.display = 'none'; // Cacher chaque champ de formulaire
+            });
+
+            // faire revenir le formulaire à sa taille normale si elle a été agrandie à cause des messages d'érreurs
+            var formContainer = document.querySelector('.fg_plugin');
+            formContainer.classList.remove('enlarged');
+
+            // Reduire la taille du formulaire lorsque le message de succès s'affiche
+            var formContainer = document.querySelector('.fg_plugin'); 
+            formContainer.classList.add('reduced'); // Ajouter la classe pour réduire la taille
+
+
+            // Afficher le titre et le message de succès
+            var titre = document.getElementById('titre_formulaire'); // Assurez-vous que le titre a cet ID
+            titre.style.display = 'block'; // Afficher le titre
             document.getElementById('message_global').textContent = data.message_global || "Formulaire envoyé avec succès !";
-            window.location.href = data.redirect_url;
+
+            //Rédiriger l'utilisateur vers la page de validation de goliat après 1s
+            setTimeout(() => {
+                window.location.href = "https://www.goliat.fr/validation-form";
+            }, 1000);
         }
     })
     .catch(error => {
@@ -95,3 +120,4 @@ function recupererFormulaire() {
         boutonSubmit.value = "DECOUVRIR NOS TARIFS";
     });
 }
+

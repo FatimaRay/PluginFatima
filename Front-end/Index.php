@@ -8,8 +8,8 @@
 </head>
 <body> 
     <div class="fg_plugin">
-       <form id="fg_form" method="post" action="pluginGoliat\functionAJAX.php">
-        <h4><pre>Remplissez ce Formulaire et Recevez Vos Tarifs dans cinq 
+       <form id="fg_form"  method="post" action="pluginGoliat\functionAJAX.php">
+        <h4 id="titre_formulaire"><pre>Remplissez ce Formulaire et Recevez Vos Tarifs dans cinq 
     Minutes </pre></h4>  
 
         <select name="statut" id="statut" class="fg" >

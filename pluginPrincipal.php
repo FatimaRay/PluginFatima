@@ -1,15 +1,9 @@
 <?php
       use PhpOffice\PhpSpreadsheet\Spreadsheet;
-         use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+     use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 ?>
-<?php 
-/*
-Plugin Name:  Formulaire Goliat
-Description: Collection des prospects 
-Author: Rayé Kitou Fatima
-Version: 1.0
-*/ 
 
+<?php 
 // Empêcher l'accès direct
 if (!defined('ABSPATH')) {
     exit; 
@@ -26,25 +20,14 @@ function fg_shortcode() {
 // Enregistrement et chargement de la feuille de style et du script
 function fg_style_scripts() {
     wp_enqueue_style('fg-styles', plugins_url('Front-end/style.css', __FILE__));
-    wp_enqueue_script('fg-scripts', plugins_url('js/traitement.js', __FILE__), array('jquery'), null, true);
+    wp_enqueue_script('fg-scripts', plugin_dir_url(__FILE__) . 'js/traitement.js', array('jquery'), null, true);
     wp_localize_script('fg-scripts', 'ajax_object', array(
         'ajax_url' => admin_url('admin-ajax.php'),
     ));
 }
 add_action('wp_enqueue_scripts', 'fg_style_scripts');
 
-//Validation des donnéées envoyées via AJAX
-function valider_formulaire_ajax() {
-    $erreurs = array();
-    $email = isset($_POST['email']) ? sanitize_email($_POST['email']) : '';
-    $statut = isset($_POST['statut']) ? sanitize_text_field($_POST['statut']) : '';
-    $produit = isset($_POST['produit']) ? sanitize_text_field($_POST['produit']) : '';
-    $nom = isset($_POST['nom']) ? sanitize_text_field($_POST['nom']) : '';
-    $telephone = isset($_POST['telephone']) ? sanitize_text_field($_POST['telephone']) : '';
-    $livraison = isset($_POST['livraison']) ? sanitize_text_field($_POST['livraison']) : '';
-    require_once plugin_dir_path(__FILE__) .'functionAJAX.php';
-}
-add_action('init', 'valider_formulaire_ajax'); 
+
 
 //Création d'une table personnalisée dans la base de données
 function fg_create_database_table() {
@@ -72,11 +55,20 @@ register_activation_hook(__FILE__, 'fg_create_database_table');
 
 // Insertion dans BD
 function fg_soumission_insertion() { 
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
+
+    global $wpdb;
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        // Récupérer les données envoyées via POST
+        $statut = isset($_POST['statut']) ? sanitize_text_field($_POST['statut']) : '';
+        $nom = isset($_POST['nom']) ? sanitize_text_field($_POST['nom']) : '';
+        $telephone = isset($_POST['telephone']) ? sanitize_text_field($_POST['telephone']) : '';
+        $email = isset($_POST['email']) ? sanitize_email($_POST['email']) : '';
+        $produit = isset($_POST['produit']) ? sanitize_text_field($_POST['produit']) : '';
+        $livraison = isset($_POST['livraison']) ? sanitize_text_field($_POST['livraison']) : '';
 
         // Insérer les données dans la table
         $table_name = $wpdb->prefix . 'fg_entrees';
-        $wpdb->insert(
+        $insertion=$wpdb->insert(
             $table_name,
             array(
                 'statut' => $statut,
@@ -95,12 +87,31 @@ function fg_soumission_insertion() {
                 '%s'
             )
         );
-        // require_once plugin_dir_path(__FILE__) .'functionAJAX.php';
+
+         wp_send_json_success(array('message' => 'Données enregistrées avec succès.'));
+
+        //  Envoi du prospect dans la boite mail de goliat
+        $to = 'info@goliat.fr';
+        $subject = 'Nouveau prospect';
+        $message = sprintf(
+            "Statut: %s\nNom: %s\nTéléphone: %s\nEmail: %s\nProduit: %s\nLieu de livraison: %s",
+            $statut, $nom, $telephone, $email, $produit, $livraison
+        );
+        wp_mail($to, $subject, $message);
+
+        // Envoi au middleware
+        $response = wp_remote_post('https://example.com/api', [
+            'body' => json_encode($data),
+            'headers' => ['Content-Type' => 'application/json']
+        ]);
+
+    } else {
+        wp_send_json_error(array('message' => 'Requête invalide.'));
     }
 }
-add_action('init', 'fg_soumission_insertion'); 
+
 add_action('wp_ajax_submit', 'fg_soumission_insertion');
-add_action('wp_ajax_nopriv_submit', 'fg_soumission_insertion'); 
+add_action('wp_ajax_nopriv_submit', 'fg_soumission_insertion');
 
 
 // Ajouter la page de menu dans le tableau d'administration de WordPress
