@@ -1,0 +1,54 @@
+.fg_plugin{
+    margin-bottom: 20px !important;
+    border: none; 
+    padding: 20px;          
+    width: 480px;
+    height: 600px;    
+    margin: 0 auto;        
+    background-color: #FFFFFF;
+    align-items: center;
+    box-shadow: 0px 15px 50px rgba(0, 0, 0, 0.15);
+    /* transition: height 0.3s ease-in-out;
+    display: flex;
+    flex-direction: column; */
+}
+.fg_plugin h4 pre{
+    color: rgb(236, 8, 8);
+    font-family: "Lato", Sans-serif;
+   font-size: 14px;
+   font-weight: 500;
+   line-height: 20px;
+   stroke: #b80b0b;
+   padding: 25px;
+   text-align: center;
+}
+.fg_plugin .fg{
+    width: 420px !important;
+    height: 40px !important;
+    margin-left: 10px;
+    margin-top: 4% !important;
+}
+.fg_plugin .fgp{
+    margin-top: 4% !important;
+}
+body{
+    background-color: #333;
+}
+.fg_plugin .fg_submit{
+    width: 420px;
+    height: 45px;
+    background-color: #2ecc71 !important; 
+    margin-top: 4% !important;
+    border: none;
+    cursor: pointer;
+    color: black !important;
+    margin-left: 10px;
+}
+.fg_plugin .erreur{
+    color: red;
+    font-size: 14px;
+}
+.fg_plugin .message{
+    font-size: 18px !important; 
+    color:red !important;
+}

@@ -1,0 +1,19 @@
+{
+    "name": "conta/plugin-goliat",
+    "description": "Un plugin WordPress qui utilise PhpSpreadsheet",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Conta\\PluginGoliat\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "RAYE KITOU FATIMA"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {
+        "phpoffice/phpspreadsheet": "^3.5"
+    }
+}
