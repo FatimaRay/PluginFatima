@@ -50,7 +50,6 @@ function recupererFormulaire() {
         var regex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
         return regex.test(email);
     }
-       
     // Désactiver le bouton de soumission
     var boutonSubmit = document.querySelector('.fg_submit');
     boutonSubmit.disabled = true;
@@ -107,7 +106,7 @@ function recupererFormulaire() {
             //Rédiriger l'utilisateur vers la page de validation de goliat après 1s
             setTimeout(() => {
                 window.location.href = "https://www.goliat.fr/validation-form";
-            }, 1000);
+            }, 500);
         }
     })
     .catch(error => {
@@ -120,4 +119,27 @@ function recupererFormulaire() {
         boutonSubmit.value = "DECOUVRIR NOS TARIFS";
     });
 }
+//gestion de la disparition des messages d'érreur lorsque l'utilisateur corrige les valeurs du champs
+// Validation des champs lors de la modification
+const inputs = document.querySelectorAll('#fg_form input, #fg_form select');
+inputs.forEach(input => {
+    input.addEventListener('input', function() {
+        const errorDiv = document.querySelector(`#erreur_${input.name}`);
+        if (errorDiv) {
+            errorDiv.textContent = ''; // Réinitialiser le message d'erreur spécifique
+
+            // Vérifier si tous les champs sont valides avant de masquer le message global
+            const erreurs = validerChamps({ // Utiliser ta fonction de validation
+            statut: document.getElementById('statut').value,
+            email: document.getElementById('email').value,
+            produit: document.getElementById('produit').value
+            });
+
+            // Si toutes les erreurs sont corrigées, réinitialiser le message global
+            if (Object.keys(erreurs).length === 0) {
+            document.getElementById("message_global").textContent = ''; // Masquer le message global d'erreur
+            }
+        }
+    });
+});
 

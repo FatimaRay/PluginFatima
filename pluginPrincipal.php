@@ -2,8 +2,15 @@
       use PhpOffice\PhpSpreadsheet\Spreadsheet;
      use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 ?>
-
 <?php 
+
+/*
+Plugin Name: FormulaireGoliat
+Description: Un plugin de formulaire personnalisé pour remplacer Ninja Forms avec des exigences spécifiques.
+Version: 1.0
+Author: Rayé Kitou Fatima
+*/
+
 // Empêcher l'accès direct
 if (!defined('ABSPATH')) {
     exit; 
@@ -92,12 +99,15 @@ function fg_soumission_insertion() {
 
         //  Envoi du prospect dans la boite mail de goliat
         $to = 'info@goliat.fr';
-        $subject = 'Nouveau prospect';
-        $message = sprintf(
-            "Statut: %s\nNom: %s\nTéléphone: %s\nEmail: %s\nProduit: %s\nLieu de livraison: %s",
-            $statut, $nom, $telephone, $email, $produit, $livraison
-        );
-        wp_mail($to, $subject, $message);
+      $subject = 'Nouveau prospect';
+      $message = sprintf(
+        "Statut: %s\nNom: %s\nTéléphone: %s\nEmail: %s\nProduit: %s\nLieu de livraison: %s",
+        $statut, $nom, $telephone, $email, $produit, $livraison
+      );
+      wp_mail($to,$subject,$message);
+      if (!wp_mail($to, $subject, $message)) {
+        wp_send_json_error(array('message' => 'Erreur lors de l\'envoi de l\'email.'));
+      }
 
         // Envoi au middleware
         $response = wp_remote_post('https://example.com/api', [

@@ -1,8 +1,8 @@
 .fg_plugin{
-    margin-bottom: 20px;
-    border: none; 
-    padding: 20px;          
-    width: 480px;
+    margin-bottom: 20px !important;
+    border: none !important; 
+    padding: 20px !important;          
+    width: 480px !important;
     height: 600px;    
     margin: 0 auto;        
     background-color: #FFFFFF;
@@ -11,14 +11,18 @@
     transition: all 0.3s ease;
 }
 .enlarged {
-    height: auto; /* Permet au formulaire de s'agrandir automatiquement */
-    padding: 20px; /* Ajustez le remplissage si nécessaire */
-    border: 1px solid #ccc; /* Ajoutez une bordure pour la visibilité */
+    height: auto !important; /* Permet au formulaire de s'agrandir automatiquement */
+    padding: 20px !important; /* Ajustez le remplissage si nécessaire */
+    border: 1px solid #ccc !important; /* Ajoutez une bordure pour la visibilité */
 }
 .reduced{
-    transition: all 0.3s ease; /* Animation douce */
-    transform: scale(0.8); /* Réduit la taille à 80% */
-    opacity: 0.5 ; /* Rend le formulaire un peu transparent */
+    transition: all 0.3s ease !important; /* Animation douce */
+    /* transform: scale(0.8) !important; Réduit la taille à 80% */
+    opacity: 0.5 !important; /* Rend le formulaire un peu transparent */
+    height: 300px !important;
+    width: 480px !important;
+    text-align: center !important;
+    font-size: 40px !important;
 }
 .fg_plugin h4 pre{
     color: rgb(236, 8, 8);
