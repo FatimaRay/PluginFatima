@@ -8,7 +8,7 @@
 </head>
 <body> 
     <div class="fg_plugin">
-       <form id="fg_form"  method="post" action="pluginGoliat\pluginPrincipal.php">
+       <form id="fg_form"  method="POST" action="<?php echo admin_url('admin-post.php'); ?>">
         <h4 id="titre_formulaire"><pre>Remplissez ce Formulaire et Recevez Vos Tarifs dans cinq 
     Minutes </pre></h4>  
         <input type="hidden" name="fg_delete_prospects_nonce_field" value="<?php echo wp_create_nonce('fg_delete_prospects_nonce'); ?>" />

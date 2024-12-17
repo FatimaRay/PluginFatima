@@ -1,9 +1,9 @@
 <?php
-      use PhpOffice\PhpSpreadsheet\Spreadsheet;
-     use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+    // Charger PhpSpreadsheet
+    use PhpOffice\PhpSpreadsheet\Spreadsheet;
+    use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 ?>
 <?php 
-
 /*
 Plugin Name: FormulaireGoliat
 Description: Un plugin de formulaire personnalisé pour remplacer Ninja Forms avec des exigences spécifiques.
@@ -12,7 +12,7 @@ Author: Rayé Kitou Fatima
 */
 
 // Empêcher l'accès direct
-if (!defined('ABSPATH')) {
+if (!defined ('ABSPATH')) {
     exit; 
 }
 
@@ -145,18 +145,20 @@ function fg_entrees_page() {
     $results = $wpdb->get_results("SELECT * FROM $table_name ORDER BY created_at DESC LIMIT 100");
 
     include plugin_dir_path(__FILE__) . 'Front-end/page_admin.php';
+    
 }
 
 // Exporter vers Excel
 function fg_exporter_vers_excel() {
-    if (isset($_GET['export']) && $_GET['export'] == '1') {
+    
+    if (isset($_POST['export']) && $_POST['export'] == '1') {
         require_once plugin_dir_path(__FILE__) . 'vendor/autoload.php';
 
         global $wpdb;
         $table_name = $wpdb->prefix . 'fg_entrees';
 
-        $date_debut = isset($_GET['date_debut']) ? $_GET['date_debut'] : '';
-        $date_fin = isset($_GET['date_fin']) ? $_GET['date_fin'] : '';
+        $date_debut = isset($_POST['date_debut']) ? $_POST['date_debut'] : '';
+        $date_fin = isset($_POST['date_fin']) ? $_POST['date_fin'] : '';
 
         $query = "SELECT * FROM $table_name WHERE 1=1";
 
@@ -169,12 +171,16 @@ function fg_exporter_vers_excel() {
         $query .= " ORDER BY created_at DESC";
 
         $results = $wpdb->get_results($query);
+        if(empty($results)){
+            wp_die('Aucune donnée à exporter.');
+        }
 
+        error_log('Nombre de résultats: ' . count($results));
         // Création du fichier Excel
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
 
-        // Ajout d'en-têtes au sheet
+        // // Ajout d'en-têtes au sheet
         $sheet->setCellValue('A1', 'ID');
         $sheet->setCellValue('B1', 'Statut');
         $sheet->setCellValue('C1', 'Nom');
@@ -186,15 +192,15 @@ function fg_exporter_vers_excel() {
 
         // Insertion des données dans le sheet
         $row = 2;
-        foreach ($results as $entry) {
-            $sheet->setCellValue('A1' . $row, $entry->id);
-            $sheet->setCellValue('B1' . $row, $entry->statut);
-            $sheet->setCellValue('C1' . $row, $entry->nom);
-            $sheet->setCellValue('D1' . $row, $entry->telephone);
-            $sheet->setCellValue('E1' . $row, $entry->email);
-            $sheet->setCellValue('F1' . $row, $entry->produit);
-            $sheet->setCellValue('G1' . $row, $entry->livraison);
-            $sheet->setCellValue('H1' . $row, $entry->created_at);
+        foreach ($results as $entrees) {
+            $sheet->setCellValue('A' . $row, $entrees->id);
+            $sheet->setCellValue('B' . $row, $entrees->statut);
+            $sheet->setCellValue('C' . $row, $entrees->nom);
+            $sheet->setCellValue('D' . $row, $entrees->telephone);
+            $sheet->setCellValue('E' . $row, $entrees->email);
+            $sheet->setCellValue('F' . $row, $entrees->produit);
+            $sheet->setCellValue('G' . $row, $entrees->livraison);
+            $sheet->setCellValue('H' . $row, $entrees->created_at);
             $row++;
         }
 
@@ -206,9 +212,37 @@ function fg_exporter_vers_excel() {
 
         $writer = new Xlsx($spreadsheet);
         $writer->save('php://output');
-                exit;
+        exit;
     }
        
 }
-add_action('admin_init', 'fg_exporter_vers_excel');
+add_action('admin_post_export_excel', 'fg_exporter_vers_excel');
+
+function fg_delete_prospects() {
+    global $wpdb;
+
+    // Vérifiez si l'utilisateur a les permissions nécessaires
+    if (!current_user_can('manage_options')) {
+        wp_die(__('Vous n’avez pas les permissions nécessaires pour effectuer cette action.', 'fg'));
+    }
+
+    if (isset($_POST['prospects_ids']) && is_array($_POST['prospects_ids'])) {
+        foreach ($_POST['prospects_ids'] as $prospect_id) {
+            // Supprimer chaque prospect de la base de données
+            $wpdb->delete($wpdb->prefix . 'fg_entrees', ['id' => intval($prospect_id)]);
+        }
+        wp_redirect(admin_url('admin.php?page=fg_entrees&deleted=1'));
+        exit;
+    } else {
+        wp_redirect(admin_url('admin.php?page=fg_entrees&error=1'));
+        exit;
+    }
+}
+add_action('admin_post_delete_prospects', 'fg_delete_prospects');
+if (isset($_GET['trash'])) {
+    echo '<div class="notice notice-success"><p>Les prospects sélectionnés ont été supprimés.</p></div>';
+}
+if (isset($_GET['error'])) {
+    echo '<div class="notice notice-error"><p>Aucune sélection n’a été faite.</p></div>';
+}
 ?>
