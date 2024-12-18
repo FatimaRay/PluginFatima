@@ -4,6 +4,8 @@ document.getElementById('fg_form').addEventListener('submit', function(event) {
     recupererFormulaire(); // Appeler la bonne fonction
 });
 
+
+
 function recupererFormulaire() {
     console.log("Fonction appelée !");
     // Récupérer les valeurs du formulaire
@@ -13,6 +15,7 @@ function recupererFormulaire() {
     var email = document.getElementById('email').value;
     var produit = document.getElementById('produit').value;
     var livraison = document.getElementById('livraison').value;
+    var gclid = document.getElementById('gclid').value;
 
 
     // Vérification des champs requis
@@ -64,6 +67,7 @@ function recupererFormulaire() {
     formData.append('nom', nom);
     formData.append('telephone', telephone);
     formData.append('livraison', livraison);
+    formData.append('gclid', gclid);
 
     formData.append('action', 'submit'); // Identifiant pour l'action AJAX
 
@@ -142,4 +146,28 @@ inputs.forEach(input => {
         }
     });
 });
+// Remplissage automatique du champs caché avec la valeur du paramètre gclid sur le navigateur si il existe
+// Attendre que le DOM soit complètement chargé
+document.addEventListener("DOMContentLoaded", function() {
+    // Récupérer les paramètres de l'URL
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    // Vérifier si le paramètre "gclid" existe dans l'URL
+    const gclid = urlParams.get('gclid'); // Récupère "gclid" dans l'URL
+    
+    // Si le paramètre existe, le mettre dans le champ caché
+    if (gclid) {
+        document.querySelector('input[name="gclid"]').value = gclid; // Met la valeur dans le champ
+        console.log("Valeur insérée dans le champ caché :", gclid);
+    } else {
+        console.log("Paramètre gclid non trouvé dans l'URL.");
+    }
+    
+    // Afficher la valeur actuelle du champ caché pour vérification
+    console.log("Valeur actuelle du champ caché :", document.querySelector('input[name="gclid"]').value);
+});
+
+
+
+
 

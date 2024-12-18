@@ -150,7 +150,7 @@
             <option value="GD Luxembourg">GD Luxembourg</option>	
             <option value="suisse">suisse</option>																																								
         </select>
-        <input type="hidden" name="gclid_field">
+        <input type="hidden" name="gclid" id="gclid" >
         <input type="submit" class="fg_submit" name="submit" value="DECOUVRIR NOS TARIFS">	
         <div id="message_global" class="message"></div>						       
       </form>  

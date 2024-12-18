@@ -2,8 +2,7 @@
     // Charger PhpSpreadsheet
     use PhpOffice\PhpSpreadsheet\Spreadsheet;
     use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-?>
-<?php 
+ 
 /*
 Plugin Name: FormulaireGoliat
 Description: Un plugin de formulaire personnalisé pour remplacer Ninja Forms avec des exigences spécifiques.
@@ -51,6 +50,7 @@ function fg_create_database_table() {
         email text NOT NULL,
         produit tinytext NOT NULL,
         livraison tinytext NOT NULL,
+        gclid VARCHAR(255) DEFAULT NULL,
         created_at datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
         PRIMARY KEY (id)
     ) $charset_collate;";
@@ -62,7 +62,6 @@ register_activation_hook(__FILE__, 'fg_create_database_table');
 
 // Insertion dans BD
 function fg_soumission_insertion() { 
-
     global $wpdb;
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Récupérer les données envoyées via POST
@@ -72,18 +71,19 @@ function fg_soumission_insertion() {
         $email = isset($_POST['email']) ? sanitize_email($_POST['email']) : '';
         $produit = isset($_POST['produit']) ? sanitize_text_field($_POST['produit']) : '';
         $livraison = isset($_POST['livraison']) ? sanitize_text_field($_POST['livraison']) : '';
-
+        $gclid = isset($_POST['gclid']) ? sanitize_text_field($_POST['gclid']) : '';
         // Insérer les données dans la table
         $table_name = $wpdb->prefix . 'fg_entrees';
         $insertion=$wpdb->insert(
             $table_name,
-            array(
+           $data=array(
                 'statut' => $statut,
                 'nom' => $nom,
                 'telephone' => $telephone,
                 'email' => $email,
                 'produit' => $produit,
-                'livraison' => $livraison
+                'livraison' => $livraison,
+                'gclid' => $gclid,
             ),
             array(
                 '%s',
@@ -91,7 +91,8 @@ function fg_soumission_insertion() {
                 '%s',
                 '%s',
                 '%s',
-                '%s'
+                '%s',
+                '%s',
             )
         );
 
@@ -104,7 +105,6 @@ function fg_soumission_insertion() {
         "Statut: %s\nNom: %s\nTéléphone: %s\nEmail: %s\nProduit: %s\nLieu de livraison: %s",
         $statut, $nom, $telephone, $email, $produit, $livraison
       );
-      wp_mail($to,$subject,$message);
       if (!wp_mail($to, $subject, $message)) {
         wp_send_json_error(array('message' => 'Erreur lors de l\'envoi de l\'email.'));
       }
@@ -137,31 +137,52 @@ function fg_admin_menu() {
     );
 }
 
-// Récupérer les données de la table fg_entrees pour afficher dans l'admin
+// Récupérer les données de la table fg_entrees pour afficher dans l'admin et pouvoir les filrtrer
 function fg_entrees_page() {
     global $wpdb;
-
     $table_name = $wpdb->prefix . 'fg_entrees';
-    $results = $wpdb->get_results("SELECT * FROM $table_name ORDER BY created_at DESC LIMIT 100");
+    $query = "SELECT * FROM $table_name WHERE 1=1";
+    // Repcupération des dates à partir des paramètres d'url
+    if ($date_debut) {
+        $query .= $wpdb->prepare(" AND created_at >= %s", $date_debut . ' 00:00:00');
+    }
+    if ($date_fin) {
+        $query .= $wpdb->prepare(" AND created_at <= %s", $date_fin . ' 23:59:59');
+    }
 
+    $query .= " ORDER BY created_at DESC LIMIT 100";
+    $results = $wpdb->get_results($query);
     include plugin_dir_path(__FILE__) . 'Front-end/page_admin.php';
-    
 }
 
-// Exporter vers Excel
-function fg_exporter_vers_excel() {
-    
-    if (isset($_POST['export']) && $_POST['export'] == '1') {
-        require_once plugin_dir_path(__FILE__) . 'vendor/autoload.php';
+add_action('admin_post_filter_prospects', 'fg_filtrer_prospects');
+function fg_filtrer_prospects() {
+    // Récupérer les dates
+    $date_debut = isset($_POST['date_debut']) ? sanitize_text_field($_POST['date_debut']) : '';
+    $date_fin = isset($_POST['date_fin']) ? sanitize_text_field($_POST['date_fin']) : '';
 
+    // Vous pouvez maintenant appliquer votre logique de filtrage ici
+    // Par exemple, rediriger vers la page avec les dates de filtre dans l'URL
+    $url = add_query_arg(array(
+        'date_debut' => $date_debut,
+        'date_fin' => $date_fin
+    ), admin_url('admin.php?page=fg_entrees'));
+
+    wp_redirect($url);
+    exit;
+}
+
+
+// Fonction Exporter vers Excel
+add_action('admin_post_export_excel', 'fg_exporter_vers_excel');
+function fg_exporter_vers_excel() {
+    if  ($_POST['action'] === 'export_excel') {
+        require_once plugin_dir_path(__FILE__) . 'vendor/autoload.php';
         global $wpdb;
         $table_name = $wpdb->prefix . 'fg_entrees';
-
         $date_debut = isset($_POST['date_debut']) ? $_POST['date_debut'] : '';
         $date_fin = isset($_POST['date_fin']) ? $_POST['date_fin'] : '';
-
         $query = "SELECT * FROM $table_name WHERE 1=1";
-
         if ($date_debut) {
             $query .= $wpdb->prepare(" AND created_at >= %s", $date_debut . ' 00:00:00');
         }
@@ -169,17 +190,14 @@ function fg_exporter_vers_excel() {
             $query .= $wpdb->prepare(" AND created_at <= %s", $date_fin . ' 23:59:59');
         }
         $query .= " ORDER BY created_at DESC";
-
         $results = $wpdb->get_results($query);
         if(empty($results)){
             wp_die('Aucune donnée à exporter.');
         }
-
         error_log('Nombre de résultats: ' . count($results));
         // Création du fichier Excel
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
-
         // // Ajout d'en-têtes au sheet
         $sheet->setCellValue('A1', 'ID');
         $sheet->setCellValue('B1', 'Statut');
@@ -189,7 +207,7 @@ function fg_exporter_vers_excel() {
         $sheet->setCellValue('F1', 'Produit');
         $sheet->setCellValue('G1', 'Lieu de livraison');
         $sheet->setCellValue('H1', 'Date de création');
-
+        $sheet->setCellValue('I1', 'gclig_field');
         // Insertion des données dans le sheet
         $row = 2;
         foreach ($results as $entrees) {
@@ -201,48 +219,35 @@ function fg_exporter_vers_excel() {
             $sheet->setCellValue('F' . $row, $entrees->produit);
             $sheet->setCellValue('G' . $row, $entrees->livraison);
             $sheet->setCellValue('H' . $row, $entrees->created_at);
+            $sheet->setCellValue('I' . $row, $entrees->gclid);
             $row++;
         }
-
         // Génération du fichier Excel
         $filename = 'Prospects_' . date('Y-m-d') . '.xlsx';
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         header('Content-Disposition: attachment;filename="' . $filename . '"');
         header('Cache-Control: max-age=0');
-
         $writer = new Xlsx($spreadsheet);
         $writer->save('php://output');
         exit;
     }
        
 }
-add_action('admin_post_export_excel', 'fg_exporter_vers_excel');
 
-function fg_delete_prospects() {
-    global $wpdb;
 
-    // Vérifiez si l'utilisateur a les permissions nécessaires
-    if (!current_user_can('manage_options')) {
-        wp_die(__('Vous n’avez pas les permissions nécessaires pour effectuer cette action.', 'fg'));
-    }
 
-    if (isset($_POST['prospects_ids']) && is_array($_POST['prospects_ids'])) {
-        foreach ($_POST['prospects_ids'] as $prospect_id) {
-            // Supprimer chaque prospect de la base de données
-            $wpdb->delete($wpdb->prefix . 'fg_entrees', ['id' => intval($prospect_id)]);
-        }
-        wp_redirect(admin_url('admin.php?page=fg_entrees&deleted=1'));
-        exit;
-    } else {
-        wp_redirect(admin_url('admin.php?page=fg_entrees&error=1'));
-        exit;
-    }
-}
+// Fonction suppréssion prospects
 add_action('admin_post_delete_prospects', 'fg_delete_prospects');
-if (isset($_GET['trash'])) {
-    echo '<div class="notice notice-success"><p>Les prospects sélectionnés ont été supprimés.</p></div>';
-}
-if (isset($_GET['error'])) {
-    echo '<div class="notice notice-error"><p>Aucune sélection n’a été faite.</p></div>';
+function fg_delete_prospects() {
+    if ($_POST['action'] === 'delete_prospects') {
+        global $wpdb;
+        if (isset($_POST['prospects_ids']) && is_array($_POST['prospects_ids'])) {
+            foreach ($_POST['prospects_ids'] as $prospect_id) {
+                $wpdb->delete($wpdb->prefix . 'fg_entrees', ['id' => intval($prospect_id)]);
+            }
+            wp_redirect(admin_url('admin.php?page=fg_entrees&deleted=1'));
+            exit;
+        }
+    }
 }
 ?>
