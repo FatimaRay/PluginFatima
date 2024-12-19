@@ -141,28 +141,37 @@ function fg_admin_menu() {
 function fg_entrees_page() {
     global $wpdb;
     $table_name = $wpdb->prefix . 'fg_entrees';
+
+    // Construction de la requête SQL avec les filtres
     $query = "SELECT * FROM $table_name WHERE 1=1";
-    // Repcupération des dates à partir des paramètres d'url
-    if ($date_debut) {
+
+     // Récupération des dates à partir des paramètres de l'URL
+     $date_debut = isset($_GET['date_debut']) ? sanitize_text_field($_GET['date_debut']) : '';
+     $date_fin = isset($_GET['date_fin']) ? sanitize_text_field($_GET['date_fin']) : '';
+
+    if (!empty($date_debut)) {
         $query .= $wpdb->prepare(" AND created_at >= %s", $date_debut . ' 00:00:00');
     }
-    if ($date_fin) {
+    if (!empty($date_fin)) {
         $query .= $wpdb->prepare(" AND created_at <= %s", $date_fin . ' 23:59:59');
     }
 
-    $query .= " ORDER BY created_at DESC LIMIT 100";
+    $query .= " ORDER BY created_at DESC LIMIT 200";
+
+    // Exécuter la requête
     $results = $wpdb->get_results($query);
+
+    // Inclure le fichier de la vue (page_admin.php)
     include plugin_dir_path(__FILE__) . 'Front-end/page_admin.php';
 }
 
+
 add_action('admin_post_filter_prospects', 'fg_filtrer_prospects');
 function fg_filtrer_prospects() {
-    // Récupérer les dates
     $date_debut = isset($_POST['date_debut']) ? sanitize_text_field($_POST['date_debut']) : '';
-    $date_fin = isset($_POST['date_fin']) ? sanitize_text_field($_POST['date_fin']) : '';
-
-    // Vous pouvez maintenant appliquer votre logique de filtrage ici
-    // Par exemple, rediriger vers la page avec les dates de filtre dans l'URL
+     $date_fin = isset($_POST['date_fin']) ? sanitize_text_field($_POST['date_fin']) : '';
+    
+    // rediriger vers la page avec les dates de filtre dans l'URL
     $url = add_query_arg(array(
         'date_debut' => $date_debut,
         'date_fin' => $date_fin
@@ -189,7 +198,7 @@ function fg_exporter_vers_excel() {
         if ($date_fin) {
             $query .= $wpdb->prepare(" AND created_at <= %s", $date_fin . ' 23:59:59');
         }
-        $query .= " ORDER BY created_at DESC";
+        $query .= " ORDER BY created_at DESC LIMIT 200";
         $results = $wpdb->get_results($query);
         if(empty($results)){
             wp_die('Aucune donnée à exporter.');
@@ -234,20 +243,35 @@ function fg_exporter_vers_excel() {
        
 }
 
-
-
-// Fonction suppréssion prospects
-add_action('admin_post_delete_prospects', 'fg_delete_prospects');
-function fg_delete_prospects() {
-    if ($_POST['action'] === 'delete_prospects') {
+function delete_prospects() {
+    if (isset($_POST['prospects_ids']) && !empty($_POST['prospects_ids'])) {
         global $wpdb;
-        if (isset($_POST['prospects_ids']) && is_array($_POST['prospects_ids'])) {
-            foreach ($_POST['prospects_ids'] as $prospect_id) {
-                $wpdb->delete($wpdb->prefix . 'fg_entrees', ['id' => intval($prospect_id)]);
-            }
-            wp_redirect(admin_url('admin.php?page=fg_entrees&deleted=1'));
-            exit;
+        $table_name = $wpdb->prefix . 'fg_entrees';
+
+        // Récupérer les IDs des prospects sélectionnés
+        $prospects_ids = array_map('intval', $_POST['prospects_ids']);
+        
+        // Préparer la requête de suppression
+        $placeholders = implode(',', array_fill(0, count($prospects_ids), '%d'));
+        $query = "DELETE FROM $table_name WHERE id IN ($placeholders)";
+        
+        // Exécuter la requête
+        $result = $wpdb->query($wpdb->prepare($query, ...$prospects_ids));
+
+        if ($result === false) {
+            // Si la requête échoue, afficher un message d'erreur
+            wp_die('Erreur lors de la suppression des prospects.');
+        } else {
+            // Rediriger après la suppression
+            wp_redirect(admin_url('admin.php?page=fg_entrees&message=deleted'));
+            exit; // Assurez-vous que le script s'arrête après la redirection
         }
+    } 
+    else {
+        wp_die('Aucun prospect sélectionné pour suppression.');
     }
 }
+add_action('admin_post_delete_prospects', 'delete_prospects');
+
+
 ?>

@@ -14,18 +14,22 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
     <!-- Champs de date -->
     <label for="date_debut">Start Date:</label>
     <input type="date" id="date_debut" name="date_debut"
-           value="<?php echo isset($_POST['date_debut']) ? esc_attr($_POST['date_debut']) : ''; ?>">
+           value="<?php 
+                      echo isset($_GET['date_debut']) ? esc_attr($_GET['date_debut']) : ''; 
+                    ?>">
 
     <label for="date_fin">End Date :</label>
     <input type="date" id="date_fin" name="date_fin"
-           value="<?php echo isset($_POST['date_fin']) ? esc_attr($_POST['date_fin']) : ''; ?>">
+           value="<?php 
+                    echo isset($_GET['date_fin']) ? esc_attr($_GET['date_fin']) : ''; 
+                    ?>"> 
 
     <!-- Boutons avec une action spécifique -->
     <button type="submit" class="bouton" name="action" value="delete_prospects" 
         onclick="return confirm('Êtes-vous sûr de vouloir supprimer les prospects sélectionnés ?')">
         Déplacer vers la corbeille
     </button>
-    <button type="submit" class="bouton" name="action" value="filter_prospects">Filtrer les entrées</button>
+    <button type="submit" class="bouton" name="action" value="filter_prospects">Filtrer les entrées</button> 
     <button type="submit" class="bouton" name="action" value="export_excel">Exporter vers Excel</button><br><br>
 
     <!-- Table des prospects -->
@@ -48,8 +52,8 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
         <?php 
             global $wpdb;
             $table_name = $wpdb->prefix . 'fg_entrees';
-            $date_debut = isset($_POST['date_debut']) ? sanitize_text_field($_POST['date_debut']) : '';
-            $date_fin = isset($_POST['date_fin']) ? sanitize_text_field($_POST['date_fin']) : '';
+            $date_debut = isset($_GET['date_debut']) ? sanitize_text_field($_GET['date_debut']) : '';
+            $date_fin = isset($_GET['date_fin']) ? sanitize_text_field($_GET['date_fin']) : '';
 
             $query = "SELECT * FROM $table_name WHERE 1=1";
 
@@ -60,7 +64,7 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
                 $query .= $wpdb->prepare(" AND created_at <= %s", $date_fin . ' 23:59:59');
             }
 
-            $query .= " ORDER BY created_at DESC LIMIT 100";
+            $query .= " ORDER BY created_at DESC LIMIT 200";
             $results = $wpdb->get_results($query);
 
             foreach ($results as $entrees) {
@@ -89,20 +93,6 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
         text: size 14px;
     }
 </style>    
-<!-- <script>
-    document.getElementById('select_all').addEventListener('change', function() {
-    const checkboxes = document.querySelectorAll('input[name="prospects_ids[]"]');
-    checkboxes.forEach(checkbox => checkbox.checked = this.checked);
-   });
-
-  document.querySelector('button[name="trash"]').addEventListener('click', function(event) {
-    const selectedCheckboxes = document.querySelectorAll('input[name="prospects_ids[]"]:checked');
-    if (selectedCheckboxes.length === 0) {
-        event.preventDefault();  // Empêcher la soumission du formulaire
-        alert('Veuillez sélectionner au moins un prospect à supprimer.');
-    }
-   });
-</script> -->
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
