@@ -107,10 +107,21 @@ function recupererFormulaire() {
             titre.style.display = 'block'; // Afficher le titre
             document.getElementById('message_global').textContent = data.message_global || "Formulaire envoyé avec succès !";
 
-            //Rédiriger l'utilisateur vers la page de validation de goliat après 1s
-            setTimeout(() => {
-                window.location.href = "https://www.goliat.fr/validation-form";
-            }, 500);
+
+// Après la soumission et si tout est valide, rediriger vers l'URL personnalisée
+             setTimeout(() => {
+                // Récupérer les valeurs des champs
+                const email = document.getElementById('email').value;
+                const tel = document.getElementById('telephone').value;
+                const livraison = document.getElementById('livraison').value;
+                const gclid=document.getElementById('gclid').value;
+
+                // Construire l'URL de redirection avec les paramètres
+                const redirectionUrl = `https://www.goliat.fr/validation-form/?email=${encodeURIComponent(email)}&tel=${encodeURIComponent(tel)}&livraison=${encodeURIComponent(livraison)}&gclid=${encodeURIComponent(gclid)}`;   
+                // Rediriger l'utilisateur
+                window.location.href = redirectionUrl;
+            }, 500); // Redirection après 500ms ou ajustez selon votre besoin
+
         }
     })
     .catch(error => {

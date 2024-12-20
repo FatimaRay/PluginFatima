@@ -25,8 +25,7 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
                     ?>"> 
 
     <!-- Boutons avec une action spécifique -->
-    <button type="submit" class="bouton" name="action" value="delete_prospects" 
-        onclick="return confirm('Êtes-vous sûr de vouloir supprimer les prospects sélectionnés ?')">
+    <button type="submit" class="bouton" name="action" value="delete_prospects"  onclick="return confirm('Êtes-vous sûr de vouloir supprimer les prospects sélectionnés ?')">
         Déplacer vers la corbeille
     </button>
     <button type="submit" class="bouton" name="action" value="filter_prospects">Filtrer les entrées</button> 
@@ -37,7 +36,7 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
         <thead>
             <tr>
                 <th><input type="checkbox" id="select_all"></th>
-                <th>ID</th>
+                <th>#</th>
                 <th>Statut</th>
                 <th>Nom</th>
                 <th>Téléphone</th>
@@ -68,8 +67,14 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
             $results = $wpdb->get_results($query);
 
             foreach ($results as $entrees) {
-                echo "<tr>
+                echo "<tr class='ligne-prospect'>
                         <td><input type='checkbox' name='prospects_ids[]' value='" . esc_attr($entrees->id) . "'></td>
+                        <td>{$entrees->id}
+                            <div class='options' style='display: none;'>
+                              <a href='" . admin_url("admin-post.php?action=delete_prospect_single&id={$entrees->id}") . "' class='action-supprimer'>Suppression</a> /
+                              <a href='" . admin_url("admin-post.php?action=export_prospect_single&id={$entrees->id}") . "' class='action-exporter'>Exportation</a>
+                            </div>
+                        </td>
                         <td>{$entrees->id}</td>
                         <td>{$entrees->statut}</td>
                         <td>{$entrees->nom}</td>
@@ -86,31 +91,79 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
     </table>
 </form>
 
+<!-- message d'érreur si date fin<date-debut ou pas de données dans une plage de date -->
+<?php if (isset($error_message)) : ?>
+    <div class="notice notice-error">
+        <p><?php echo esc_html($error_message); ?></p>
+    </div>
+<?php endif; ?>
+
+<!-- messahe d'érreur si aucune donnée à exporter -->
+<?php if (isset($_GET['error']) && $_GET['error'] === 'no_data') : ?>
+    <div class="notice notice-error is-dismissible">
+        <p>Aucun prospect à exporter.</p>
+    </div>
+<?php endif; ?>
+
+
 </div>
+
 <style>
     .bouton{
-        margin-left: 25px;
-        text: size 14px;
+        margin-left: 28px;
+        font-size: 14px;
     }
-</style>    
+
+</style>
+
+<!-- <script>
+    document.addEventListener('DOMContentLoaded', function() {
+    const deleteButton = document.querySelector('button[name="action"][value="delete_prospects"]');
+
+    if (deleteButton) {
+        deleteButton.addEventListener('click', function(event) {
+            // Sélectionner les cases cochées
+            const selectedCheckboxes = document.querySelectorAll('input[name="prospects_ids[]"]:checked');
+
+            // Si aucune case n'est cochée
+            if (selectedCheckboxes.length === 0) {
+                event.preventDefault(); // Empêcher la soumission du formulaire
+                alert('Veuillez sélectionner au moins un prospect à supprimer.');
+                return; // Arrêter l'exécution du reste du code
+            }
+
+            // Si au moins une case est cochée, demander confirmation
+            const confirmation = confirm('Êtes-vous sûr de vouloir supprimer les prospects sélectionnés ?');
+            if (!confirmation) {
+                event.preventDefault(); // Annuler la suppression si l'utilisateur clique sur "Annuler"
+            }
+        });
+    }
+});
+
+
+</script> -->
 
 <script>
+    
     document.addEventListener('DOMContentLoaded', function() {
-        const selectAllCheckbox = document.getElementById('select_all');
-        if (selectAllCheckbox) {
-            selectAllCheckbox.addEventListener('change', function() {
-                const checkboxes = document.querySelectorAll('input[name="prospects_ids[]"]');
-                checkboxes.forEach(checkbox => checkbox.checked = this.checked);
-            });
-        }
-
         const deleteButton = document.querySelector('button[name="action"][value="delete_prospects"]');
+
         if (deleteButton) {
             deleteButton.addEventListener('click', function(event) {
+                // Sélectionner les cases cochées
                 const selectedCheckboxes = document.querySelectorAll('input[name="prospects_ids[]"]:checked');
+
+                // Si aucune case n'est cochée
                 if (selectedCheckboxes.length === 0) {
-                    event.preventDefault();  // Empêcher la soumission du formulaire
-                    alert('Veuillez sélectionner au moins un prospect à supprimer.');
+                    event.preventDefault(); // Empêcher la soumission du formulaire
+                    alert('Veuillez sélectionner au moins un prospect à supprimer.'); // Afficher le message d'erreur
+                } else {
+                    // Si au moins une case est cochée, demander confirmation
+                    const confirmation = confirm('Êtes-vous sûr de vouloir supprimer les prospects sélectionnés ?');
+                    if (!confirmation) {
+                        event.preventDefault(); // Annuler la suppression si l'utilisateur clique sur "Annuler"
+                    }
                 }
             });
         }

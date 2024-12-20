@@ -7,7 +7,7 @@
 Plugin Name: FormulaireGoliat
 Description: Un plugin de formulaire personnalisé pour remplacer Ninja Forms avec des exigences spécifiques.
 Version: 1.0
-Author: Rayé Kitou Fatima
+Author: GOLIAT Cameroun
 */
 
 // Empêcher l'accès direct
@@ -32,6 +32,17 @@ function fg_style_scripts() {
     ));
 }
 add_action('wp_enqueue_scripts', 'fg_style_scripts');
+
+// Enregistrement et chargement de styles et scripts pour l'administration
+function fg_admin_style_scripts($hook_suffix) {
+    // Vérifiez que vous êtes bien sur la page admin correspondante
+    if ($hook_suffix === 'toplevel_page_fg_entrees') { 
+        // Enqueue le style CSS pour la page admin
+        wp_enqueue_style( 'fg-admin-styles', plugins_url('Frontend/page-admin.css', __FILE__) );
+    }
+}
+add_action('admin_enqueue_scripts', 'fg_admin_style_scripts');
+
 
 
 
@@ -84,8 +95,10 @@ function fg_soumission_insertion() {
                 'produit' => $produit,
                 'livraison' => $livraison,
                 'gclid' => $gclid,
+                'created_at' => $created_at,
             ),
             array(
+                '%s',
                 '%s',
                 '%s',
                 '%s',
@@ -161,6 +174,14 @@ function fg_entrees_page() {
     // Exécuter la requête
     $results = $wpdb->get_results($query);
 
+    if($date_fin<$date_debut){
+         $error_message = 'Veuillez entrer une date de fin Supérieure ou Egale à la date de debut.';
+        
+    }
+    else if (empty($results)) {
+         $error_message = 'Aucun prospect trouvé dans la plage de dates sélectionnée.';
+    }
+
     // Inclure le fichier de la vue (page_admin.php)
     include plugin_dir_path(__FILE__) . 'Front-end/page_admin.php';
 }
@@ -182,7 +203,7 @@ function fg_filtrer_prospects() {
 }
 
 
-// Fonction Exporter vers Excel
+// Exportation d'une ou plusieurs lignes vers Excel
 add_action('admin_post_export_excel', 'fg_exporter_vers_excel');
 function fg_exporter_vers_excel() {
     if  ($_POST['action'] === 'export_excel') {
@@ -200,15 +221,18 @@ function fg_exporter_vers_excel() {
         }
         $query .= " ORDER BY created_at DESC LIMIT 200";
         $results = $wpdb->get_results($query);
-        if(empty($results)){
-            wp_die('Aucune donnée à exporter.');
+
+        if (empty($results)) {
+            // Redirection avec un message d'erreur
+            wp_redirect(admin_url('admin.php?page=fg_entrees&error=no_data'));
+            exit;
         }
         error_log('Nombre de résultats: ' . count($results));
         // Création du fichier Excel
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
         // // Ajout d'en-têtes au sheet
-        $sheet->setCellValue('A1', 'ID');
+        $sheet->setCellValue('A1', '#');
         $sheet->setCellValue('B1', 'Statut');
         $sheet->setCellValue('C1', 'Nom');
         $sheet->setCellValue('D1', 'Téléphone');
@@ -243,6 +267,59 @@ function fg_exporter_vers_excel() {
        
 }
 
+// Exportation d'une seule ligne vers excel
+add_action('admin_post_export_prospect_single', 'export_prospect_single');
+function export_prospect_single() {
+    if (!empty($_GET['id'])) {
+        global $wpdb;
+        require_once plugin_dir_path(__FILE__) . 'vendor/autoload.php';
+
+        $table_name = $wpdb->prefix . 'fg_entrees';
+        $id = intval($_GET['id']);
+        $prospect = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_name WHERE id = %d", $id));
+
+        if (!$prospect) {
+            wp_die('Prospect introuvable.');
+        }
+
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        $sheet->setCellValue('A1', '#');
+        $sheet->setCellValue('B1', 'Statut');
+        $sheet->setCellValue('C1', 'Nom');
+        $sheet->setCellValue('D1', 'Téléphone');
+        $sheet->setCellValue('E1', 'Email');
+        $sheet->setCellValue('F1', 'Produit');
+        $sheet->setCellValue('G1', 'Lieu de livraison');
+        $sheet->setCellValue('H1', 'Date de création');
+        $sheet->setCellValue('I1', 'gclid_field');
+
+        $sheet->setCellValue('A2', $prospect->id);
+        $sheet->setCellValue('B2', $prospect->statut);
+        $sheet->setCellValue('C2', $prospect->nom);
+        $sheet->setCellValue('D2', $prospect->telephone);
+        $sheet->setCellValue('E2', $prospect->email);
+        $sheet->setCellValue('F2', $prospect->produit);
+        $sheet->setCellValue('G2', $prospect->livraison);
+        $sheet->setCellValue('H2', $prospect->created_at);
+        $sheet->setCellValue('I2', $prospect->gclid);
+
+        $filename = 'Prospect_' . $prospect->id . '.xlsx';
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header("Content-Disposition: attachment;filename=\"$filename\"");
+        header('Cache-Control: max-age=0');
+
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $writer->save('php://output');
+        exit;
+    } else {
+        wp_die('ID invalide pour exportation.');
+    }
+}
+
+
+//suppression d'une ou plusieurs lignes
 function delete_prospects() {
     if (isset($_POST['prospects_ids']) && !empty($_POST['prospects_ids'])) {
         global $wpdb;
@@ -272,6 +349,28 @@ function delete_prospects() {
     }
 }
 add_action('admin_post_delete_prospects', 'delete_prospects');
+
+// suppréssion d'une seule ligne
+add_action('admin_post_delete_prospect_single', 'delete_prospect_unique');
+function delete_prospect_unique() {
+    if (!empty($_GET['id'])) {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'fg_entrees';
+        $id = intval($_GET['id']);
+
+        $result = $wpdb->delete($table_name, array('id' => $id), array('%d'));
+
+        if ($result === false) {
+            wp_die('Erreur lors de la suppression du prospect.');
+        } else {
+            wp_redirect(admin_url('admin.php?page=fg_entrees&message=single_deleted'));
+            exit;
+        }
+    } else {
+        wp_die('ID invalide pour suppression.');
+    }
+}
+
 
 
 ?>

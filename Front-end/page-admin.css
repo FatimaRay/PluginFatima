@@ -1,0 +1,29 @@
+.actions-ligne a:hover {
+text-decoration: underline;
+color: darkred; /* Changera la couleur au survol */
+}
+
+
+/* Cache les options par défaut */
+.options {
+    display: none;
+}
+
+/* Affiche les options lorsque le survol est effectué sur la ligne du tableau */
+.actions-ligne:hover .options {
+    display: block;
+}
+
+/* Styles pour les options */
+.options button {
+    margin: 0 5px;
+    padding: 5px 10px;
+    background-color: #0073aa;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+.options button:hover {
+    background-color: #005177;
+}
