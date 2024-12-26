@@ -5,7 +5,7 @@
  
 /*
 Plugin Name: FormulaireGoliat
-Description: Un plugin de formulaire personnalisé pour remplacer Ninja Forms avec des exigences spécifiques.
+Description: Un plugin pour la collecte des prospects.
 Version: 1.0
 Author: GOLIAT Cameroun
 */
@@ -63,7 +63,7 @@ function fg_create_database_table() {
         livraison tinytext NOT NULL,
         gclid VARCHAR(255) DEFAULT NULL,
         created_at datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
-        PRIMARY KEY (id)
+        PRIMARY KEY (id) 
     ) $charset_collate;";
 
     require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
@@ -83,6 +83,7 @@ function fg_soumission_insertion() {
         $produit = isset($_POST['produit']) ? sanitize_text_field($_POST['produit']) : '';
         $livraison = isset($_POST['livraison']) ? sanitize_text_field($_POST['livraison']) : '';
         $gclid = isset($_POST['gclid']) ? sanitize_text_field($_POST['gclid']) : '';
+
         // Insérer les données dans la table
         $table_name = $wpdb->prefix . 'fg_entrees';
         $insertion=$wpdb->insert(
@@ -95,10 +96,8 @@ function fg_soumission_insertion() {
                 'produit' => $produit,
                 'livraison' => $livraison,
                 'gclid' => $gclid,
-                'created_at' => $created_at,
             ),
             array(
-                '%s',
                 '%s',
                 '%s',
                 '%s',
@@ -113,14 +112,13 @@ function fg_soumission_insertion() {
 
         //  Envoi du prospect dans la boite mail de goliat
         $to = 'info@goliat.fr';
-      $subject = 'Nouveau prospect';
-      $message = sprintf(
-        "Statut: %s\nNom: %s\nTéléphone: %s\nEmail: %s\nProduit: %s\nLieu de livraison: %s",
-        $statut, $nom, $telephone, $email, $produit, $livraison
-      );
-      if (!wp_mail($to, $subject, $message)) {
-        wp_send_json_error(array('message' => 'Erreur lors de l\'envoi de l\'email.'));
-      }
+        $subject = 'Nouveau prospect';
+        $message = sprintf("Statut: %s\nNom: %s\nTéléplone: %s\nEmail: %s\nProduit: %s\nLieu de livraison: %s\ngclid: %s",
+        $data['statut'], $data['nom'], $data['telephone'], $data['email'], $data['produit'], $data['livraison'], $data['gclid']);
+        $mail_sent = wp_mail($to, $subject, $message);
+        if (!$mail_sent) {
+            error_log('Erreur lors de l\'envoi de l\'email : ' . print_r($wpdb->last_error, true));
+        }
 
         // Envoi au middleware
         $response = wp_remote_post('https://example.com/api', [

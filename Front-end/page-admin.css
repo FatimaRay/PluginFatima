@@ -1,21 +1,20 @@
-.actions-ligne a:hover {
+/* .actions-ligne a:hover {
 text-decoration: underline;
 color: darkred; /* Changera la couleur au survol */
-}
 
 
 /* Cache les options par défaut */
-.options {
+/* .options {
     display: none;
-}
+} */
 
 /* Affiche les options lorsque le survol est effectué sur la ligne du tableau */
-.actions-ligne:hover .options {
+/* .actions-ligne:hover .options {
     display: block;
-}
+} */
 
 /* Styles pour les options */
-.options button {
+/* .options button {
     margin: 0 5px;
     padding: 5px 10px;
     background-color: #0073aa;
@@ -26,4 +25,14 @@ color: darkred; /* Changera la couleur au survol */
 
 .options button:hover {
     background-color: #005177;
-}
+} */
+.ligne-prospect:hover .options {
+    display: block !important;
+    position: absolute !important;
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    padding: 5px;
+    z-index: 10;
+
+   }
+   

@@ -25,11 +25,11 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
                     ?>"> 
 
     <!-- Boutons avec une action spécifique -->
-    <button type="submit" class="bouton" name="action" value="delete_prospects"  onclick="return confirm('Êtes-vous sûr de vouloir supprimer les prospects sélectionnés ?')">
+    <button type="submit" class="supprimer" name="action" value="delete_prospects">
         Déplacer vers la corbeille
     </button>
-    <button type="submit" class="bouton" name="action" value="filter_prospects">Filtrer les entrées</button> 
-    <button type="submit" class="bouton" name="action" value="export_excel">Exporter vers Excel</button><br><br>
+    <button type="submit" class="filtrer" name="action" value="filter_prospects">Filtrer les entrées</button> 
+    <button type="submit" class="exporter" name="action" value="export_excel">Exporter vers Excel</button><br><br><br>
 
     <!-- Table des prospects -->
     <table class="wp-list-table widefat fixed striped">
@@ -71,11 +71,10 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
                         <td><input type='checkbox' name='prospects_ids[]' value='" . esc_attr($entrees->id) . "'></td>
                         <td>{$entrees->id}
                             <div class='options' style='display: none;'>
-                              <a href='" . admin_url("admin-post.php?action=delete_prospect_single&id={$entrees->id}") . "' class='action-supprimer'>Suppression</a> /
-                              <a href='" . admin_url("admin-post.php?action=export_prospect_single&id={$entrees->id}") . "' class='action-exporter'>Exportation</a>
+                              <a href='" . admin_url("admin-post.php?action=delete_prospect_single&id={$entrees->id}") . "' class='action-supprimer'>Supprimer<span> /</span></a> 
+                              <a href='" . admin_url("admin-post.php?action=export_prospect_single&id={$entrees->id}") . "' class='action-exporter'>Exporter</a>
                             </div>
                         </td>
-                        <td>{$entrees->id}</td>
                         <td>{$entrees->statut}</td>
                         <td>{$entrees->nom}</td>
                         <td>{$entrees->telephone}</td>
@@ -109,14 +108,62 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 </div>
 
 <style>
-    .bouton{
+    .supprimer{
         margin-left: 28px;
         font-size: 14px;
+        background-color:#CE0000;
+        color: white;
+        height: 35px;
+        border-radius: 8px;
+        border: none;
+
     }
+    .filtrer{
+        margin-left: 28px;
+        font-size: 14px;
+        background-color:#135e96;
+        color: white;
+        height: 35px;
+        border-radius: 8px;
+        border: none;
+        width: 160px;
+    }
+    .exporter{
+        margin-left: 28px;
+        font-size: 14px;
+        background-color:green;
+        color: white;
+        height: 35px;
+        border-radius: 8px;
+        border: none;
+        width: 160px;
+    }
+    /* Styles pour le survol */
+    .ligne-prospect:hover .options {
+    display: block !important;
+    position: absolute !important;
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    padding: 5px;
+    z-index: 10;
+    font-size: 13px !important;
+   }
+   .ligne-prospect .options .action-supprimer{
+     color:red !important;
+     border: none;
+   }
+   .ligne-prospect .options .action-exporter{
+     color: green !important;
+     border: none;
+   }
+   .ligne-prospect .options .action-supprimer span{
+    color:black;
+   }
+
 
 </style>
 
-<!-- <script>
+<script>
     document.addEventListener('DOMContentLoaded', function() {
     const deleteButton = document.querySelector('button[name="action"][value="delete_prospects"]');
 
@@ -131,45 +178,15 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
                 alert('Veuillez sélectionner au moins un prospect à supprimer.');
                 return; // Arrêter l'exécution du reste du code
             }
-
-            // Si au moins une case est cochée, demander confirmation
+            else{
+                 // Si au moins une case est cochée, demander confirmation
             const confirmation = confirm('Êtes-vous sûr de vouloir supprimer les prospects sélectionnés ?');
             if (!confirmation) {
                 event.preventDefault(); // Annuler la suppression si l'utilisateur clique sur "Annuler"
             }
+            }
         });
     }
 });
-
-
-</script> -->
-
-<script>
-    
-    document.addEventListener('DOMContentLoaded', function() {
-        const deleteButton = document.querySelector('button[name="action"][value="delete_prospects"]');
-
-        if (deleteButton) {
-            deleteButton.addEventListener('click', function(event) {
-                // Sélectionner les cases cochées
-                const selectedCheckboxes = document.querySelectorAll('input[name="prospects_ids[]"]:checked');
-
-                // Si aucune case n'est cochée
-                if (selectedCheckboxes.length === 0) {
-                    event.preventDefault(); // Empêcher la soumission du formulaire
-                    alert('Veuillez sélectionner au moins un prospect à supprimer.'); // Afficher le message d'erreur
-                } else {
-                    // Si au moins une case est cochée, demander confirmation
-                    const confirmation = confirm('Êtes-vous sûr de vouloir supprimer les prospects sélectionnés ?');
-                    if (!confirmation) {
-                        event.preventDefault(); // Annuler la suppression si l'utilisateur clique sur "Annuler"
-                    }
-                }
-            });
-        }
-    });
 </script>
-<?php
-// Fin du buffering de sortie
-// ob_end_flush();
-?>
+

@@ -113,11 +113,11 @@ function recupererFormulaire() {
                 // Récupérer les valeurs des champs
                 const email = document.getElementById('email').value;
                 const tel = document.getElementById('telephone').value;
-                const livraison = document.getElementById('livraison').value;
+                const Livraison = document.getElementById('livraison').value;
                 const gclid=document.getElementById('gclid').value;
 
                 // Construire l'URL de redirection avec les paramètres
-                const redirectionUrl = `https://www.goliat.fr/validation-form/?email=${encodeURIComponent(email)}&tel=${encodeURIComponent(tel)}&livraison=${encodeURIComponent(livraison)}&gclid=${encodeURIComponent(gclid)}`;   
+                const redirectionUrl = `https://www.goliat.fr/validation-form/?email=${encodeURIComponent(email)}&tel=${encodeURIComponent(tel)}&Lieu-livraison=${encodeURIComponent(livraison)}&gclid=${encodeURIComponent(gclid)}`;   
                 // Rediriger l'utilisateur
                 window.location.href = redirectionUrl;
             }, 500); // Redirection après 500ms ou ajustez selon votre besoin
@@ -134,6 +134,23 @@ function recupererFormulaire() {
         boutonSubmit.value = "DECOUVRIR NOS TARIFS";
     });
 }
+
+// Fonction pour valider tous les champs
+function validerChamps(statut, email, produit) {
+    let erreurs = {};
+    if (!statut) {
+        erreurs.statut = "Ce champ est obligatoire";
+    }
+    if (!email) {
+        erreurs.email = "Ce champ est obligatoire";
+    } else if (!validateEmail(email)) {
+        erreurs.email = "Cet e-mail n'est pas valide";
+    }
+    if (!produit) {
+        erreurs.produit = "Ce champ est obligatoire";
+    }
+    return erreurs;
+}
 //gestion de la disparition des messages d'érreur lorsque l'utilisateur corrige les valeurs du champs
 // Validation des champs lors de la modification
 const inputs = document.querySelectorAll('#fg_form input, #fg_form select');
@@ -142,18 +159,18 @@ inputs.forEach(input => {
         const errorDiv = document.querySelector(`#erreur_${input.name}`);
         if (errorDiv) {
             errorDiv.textContent = ''; // Réinitialiser le message d'erreur spécifique
+        }
 
-            // Vérifier si tous les champs sont valides avant de masquer le message global
-            const erreurs = validerChamps({ // Utiliser ta fonction de validation
-            statut: document.getElementById('statut').value,
-            email: document.getElementById('email').value,
-            produit: document.getElementById('produit').value
-            });
+        // Vérifier si tous les champs sont valides avant de masquer le message global
+        const erreurs = validerChamps(  // Utiliser ta fonction de validation avec les valeurs courantes
+            document.getElementById('statut').value,
+            document.getElementById('email').value,
+            document.getElementById('produit').value
+        );
 
-            // Si toutes les erreurs sont corrigées, réinitialiser le message global
-            if (Object.keys(erreurs).length === 0) {
+        // Si toutes les erreurs sont corrigées, réinitialiser le message global
+        if (Object.keys(erreurs).length === 0) {
             document.getElementById("message_global").textContent = ''; // Masquer le message global d'erreur
-            }
         }
     });
 });
