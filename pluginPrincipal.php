@@ -5,7 +5,7 @@
  
 /*
 Plugin Name: FormulaireGoliat
-Description: Un plugin pour la collecte des prospects.
+Description: Un plugin pour la collecte des prospects
 Version: 1.0
 Author: GOLIAT Cameroun
 */
@@ -139,7 +139,7 @@ add_action('wp_ajax_nopriv_submit', 'fg_soumission_insertion');
 add_action('admin_menu', 'fg_admin_menu');
 function fg_admin_menu() {
     add_menu_page(
-        'Prospects',
+        'Prospect',
         'Formulaire Goliat',
         'manage_options',
         'fg_entrees',
