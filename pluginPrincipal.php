@@ -172,13 +172,15 @@ function fg_entrees_page() {
     // Exécuter la requête
     $results = $wpdb->get_results($query);
 
-    if($date_fin<$date_debut){
-         $error_message = 'Veuillez entrer une date de fin Supérieure ou Egale à la date de debut.';
-        
+    if( (!empty($date_debut)) and !empty($date_fin)){
+            if($date_debut<$date_fin){
+                $error_message = 'Veuillez entrer une date de fin Supérieure ou Egale à la date de debut.';
+            }
+            else if (empty($results)) {
+                $error_message = 'Aucun prospect trouvé dans la plage de dates sélectionnée.';
+           }
     }
-    else if (empty($results)) {
-         $error_message = 'Aucun prospect trouvé dans la plage de dates sélectionnée.';
-    }
+    
 
     // Inclure le fichier de la vue (page_admin.php)
     include plugin_dir_path(__FILE__) . 'Front-end/page_admin.php';

@@ -12,21 +12,21 @@
         <h4 id="titre_formulaire"><pre>Remplissez ce Formulaire et Recevez Vos Tarifs dans cinq 
     Minutes </pre></h4>  
         <input type="hidden" name="fg_delete_prospects_nonce_field" value="<?php echo wp_create_nonce('fg_delete_prospects_nonce'); ?>" />
-        <select name="statut" id="statut" class="fg" >
+        <select name="statut" id="statut" class="fg draggable">
             <option value="" disabled selected>Statut</option>
             <option value="Proféssionnel">Proféssionnel</option>
             <option value="Particulier">Particulier</option>
         </select> 
         <span id="erreur_statut" class="erreur"></span>
 
-        <input type="text" name="nom" id="nom" placeholder="Prénom et Nom" class="fg">
+        <input type="text" name="nom" id="nom" placeholder="Prénom et Nom" class="fg draggable">
 
-        <input type="number" name="telephone" id="telephone" placeholder="Téléphone" class="fg">
+        <input type="number" name="telephone" id="telephone" placeholder="Téléphone" class="fg draggable">
 
-        <input type="text" name="email" placeholder="E-mail" id="email"  class="fg" value="<?php echo esc_attr($_POST['email'] ?? ''); ?>">
+        <input type="text" name="email" placeholder="E-mail" id="email"  class="fg draggable"  value="<?php echo esc_attr($_POST['email'] ?? ''); ?>">
        <span id="erreur_email" class=erreur></span>
 
-        <select name="produit" id="produit" class="fg">
+        <select name="produit" id="produit" class="fg draggable">
             <option value="" disabled selected>Produit</option>  
             <option value="Bungalow bureau (3m,6m,combinaison)">Bungalow bureau (3m,6m,combinaison)</option>
             <option value="Bungalow sanitaire(2.3m,3m,6m)">Bungalow sanitaire(2.3m,3m,6m)</option>     
@@ -39,7 +39,7 @@
         </select>
         <span id=erreur_produit class=erreur></span>
 
-        <select name="livraison" id="livraison"  class="fg">
+        <select name="livraison" id="livraison"  class="fg draggable">
            <option value="" disabled selected>Lieu de livraison</option>																						
             <option value="01-ain">01-ain</option>																						
 	        <option value="02-aisne">02-aisne</option>	
@@ -150,7 +150,7 @@
             <option value="GD Luxembourg">GD Luxembourg</option>	
             <option value="suisse">suisse</option>																																								
         </select>
-        <input type="hidden" name="gclid" id="gclid" >
+        <input type="hidden" name="gclid" id="gclid">
         <input type="submit" class="fg_submit" name="submit" value="DECOUVRIR NOS TARIFS">	
         <div id="message_global" class="message"></div>						       
       </form>  
