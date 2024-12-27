@@ -66,17 +66,17 @@ body{
     color:red !important;
     margin-left: 12px !important; 
 }
-.fg_plugin .draggable {
-    cursor: grab;
+/* .fg_plugin .draggable {
+    cursor: grab; */
     /* background-color: #f1f1f1;
     border: 1px dashed #ccc;
      padding: 10px; 
     margin: 5px 0;  */
-}
 
-.fg_plugin .drag-over {
+
+/* .fg_plugin .drag-over {
     background-color: #e8faff;
     border: 2px dashed #2ecc71;
-}
+} */
 
 

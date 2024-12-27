@@ -5,49 +5,49 @@ document.getElementById('fg_form').addEventListener('submit', function(event) {
 });
 
 // Ajouter l'attribut draggable aux champs du formulaire
-document.addEventListener("DOMContentLoaded", function () {
-    const draggables = document.querySelectorAll(".fg");
-    const dropZone = document.querySelector(".fg_plugin");
+// document.addEventListener("DOMContentLoaded", function () {
+//     const draggables = document.querySelectorAll(".fg");
+//     const dropZone = document.querySelector(".fg_plugin");
 
-    // Rendre les champs "draggables"
-    draggables.forEach(item => {
-        item.setAttribute("draggable", true);
+//     // Rendre les champs "draggables"
+//     draggables.forEach(item => {
+//         item.setAttribute("draggable", true);
 
-        // Déclencher lors du début du drag
-        item.addEventListener("dragstart", (event) => {
-            event.dataTransfer.setData("text/plain", event.target.id);
-            event.target.classList.add("dragging");
-        });
+//         // Déclencher lors du début du drag
+//         item.addEventListener("dragstart", (event) => {
+//             event.dataTransfer.setData("text/plain", event.target.id);
+//             event.target.classList.add("dragging");
+//         });
 
-        // Supprimer la classe lors de la fin
-        item.addEventListener("dragend", (event) => {
-            event.target.classList.remove("dragging");
-        });
-    });
+//         // Supprimer la classe lors de la fin
+//         item.addEventListener("dragend", (event) => {
+//             event.target.classList.remove("dragging");
+//         });
+//     });
 
-    // Zone de dépôt
-    dropZone.addEventListener("dragover", (event) => {
-        event.preventDefault();
-        dropZone.classList.add("drag-over");
-    });
+//     // Zone de dépôt
+//     dropZone.addEventListener("dragover", (event) => {
+//         event.preventDefault();
+//         dropZone.classList.add("drag-over");
+//     });
 
-    dropZone.addEventListener("dragleave", () => {
-        dropZone.classList.remove("drag-over");
-    });
+//     dropZone.addEventListener("dragleave", () => {
+//         dropZone.classList.remove("drag-over");
+//     });
 
-    dropZone.addEventListener("drop", (event) => {
-        event.preventDefault();
-        dropZone.classList.remove("drag-over");
+//     dropZone.addEventListener("drop", (event) => {
+//         event.preventDefault();
+//         dropZone.classList.remove("drag-over");
 
-        const draggableId = e.dataTransfer.getData("text");
-        const draggedElement = document.getElementById(draggableId);
+//         const draggableId = e.dataTransfer.getData("text");
+//         const draggedElement = document.getElementById(draggableId);
 
-        // Réorganiser les éléments dans la zone de dépôt
-        if (draggedElement && dropZone.contains(draggedElement)) {
-            dropZone.appendChild(draggedElement);
-        }
-    });
-});
+//         // Réorganiser les éléments dans la zone de dépôt
+//         if (draggedElement && dropZone.contains(draggedElement)) {
+//             dropZone.appendChild(draggedElement);
+//         }
+//     });
+// });
 
 
 function validateEmail(email) {
