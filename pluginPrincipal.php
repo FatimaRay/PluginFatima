@@ -159,21 +159,25 @@ function fg_entrees_page() {
      // Récupération des dates à partir des paramètres de l'URL
      $date_debut = isset($_GET['date_debut']) ? sanitize_text_field($_GET['date_debut']) : '';
      $date_fin = isset($_GET['date_fin']) ? sanitize_text_field($_GET['date_fin']) : '';
+        if(empty($date_debut) and empty($date_fin)){
+            $query = "SELECT * FROM $table_name ORDER BY created_at DESC LIMIT 200";
+        }
+        else{
+            if (!empty($date_debut)) {
+               $query .= $wpdb->prepare(" AND created_at >= %s", $date_debut . ' 00:00:00');
+            }
+            if (!empty($date_fin)) {
+               $query .= $wpdb->prepare(" AND created_at <= %s", $date_fin . ' 23:59:59');
+            }
 
-    if (!empty($date_debut)) {
-        $query .= $wpdb->prepare(" AND created_at >= %s", $date_debut . ' 00:00:00');
-    }
-    if (!empty($date_fin)) {
-        $query .= $wpdb->prepare(" AND created_at <= %s", $date_fin . ' 23:59:59');
-    }
+           $query .= " ORDER BY created_at DESC LIMIT 200";
+        }   
 
-    $query .= " ORDER BY created_at DESC LIMIT 200";
-
-    // Exécuter la requête
+     // Exécuter la requête
     $results = $wpdb->get_results($query);
 
     if( (!empty($date_debut)) and !empty($date_fin)){
-            if($date_debut<$date_fin){
+            if($date_debut>$date_fin){
                 $error_message = 'Veuillez entrer une date de fin Supérieure ou Egale à la date de debut.';
             }
             else if (empty($results)) {
@@ -198,6 +202,13 @@ function fg_filtrer_prospects() {
         'date_fin' => $date_fin
     ), admin_url('admin.php?page=fg_entrees'));
 
+    wp_redirect($url);
+    exit;
+}
+add_action('admin_post_reinitialiser', 'fg_reinitialiser_filtres');
+function fg_reinitialiser_filtres() {
+    // Redirection vers la page sans paramètres de date
+    $url = admin_url('admin.php?page=fg_entrees');
     wp_redirect($url);
     exit;
 }
@@ -370,7 +381,5 @@ function delete_prospect_unique() {
         wp_die('ID invalide pour suppression.');
     }
 }
-
-
-
 ?>
+
