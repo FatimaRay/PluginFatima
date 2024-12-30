@@ -2,8 +2,9 @@
     margin-bottom: 20px !important;
     border: none !important; 
     padding: 20px !important;          
-    width: 480px !important;
-    height: 570px;    
+    width: 100%;
+    max-width: 480px;
+    height: auto;  
     margin: 0 auto;        
     background-color: #FFFFFF;
     align-items: center;
@@ -35,13 +36,20 @@
    text-align: center;
 }
 .fg_plugin .fg{
-    width: 420px !important;
+    margin-left: 10px !important;
+    margin-top: 2% !important;
+    width: 100%; /* Prend toute la largeur disponible */
+    max-width: 420px; /* Limite la largeur maximale */
     height: 40px !important;
-    margin-left: 10px;
-    margin-top: 4% !important;
+    margin: 10px auto; /*Centrage et espace entre les éléments*/
 }
-.fg_plugin .fgp{
+.fglivraison{
+    margin-left: 10px !important;
     margin-top: 4% !important;
+    width: 100%; /* Prend toute la largeur disponible */
+    max-width: 420px; /* Limite la largeur maximale */
+    height: 40px !important;
+    margin: 10px auto; /*Centrage et espace entre les éléments*/
 }
 body{
     background-color: #333;
@@ -50,7 +58,7 @@ body{
     width: 420px;
     height: 45px;
     background-color: #2ecc71 !important; 
-    margin-top: 4% !important;
+    margin-top: 2% !important;
     border: none;
     cursor: pointer;
     color: black !important;
@@ -78,5 +86,58 @@ body{
     background-color: #e8faff;
     border: 2px dashed #2ecc71;
 } */
+
+/* Styles pour écrans de petite taille */
+@media (max-width: 768px) {
+    .fg_plugin {
+        padding: 15px !important;
+    }
+
+    .fg_plugin h4 pre {
+        font-size: 12px;
+        padding: 15px;
+    }
+
+    .fg_plugin .fg {
+        height: 35px !important;
+    }
+
+    .fg_plugin .fg_submit {
+        height: 40px;
+    }
+
+    .fg_plugin .erreur {
+        font-size: 12px;
+    }
+}
+
+/* Styles pour très petits écrans (mobiles) */
+@media (max-width: 480px) {
+    .fg_plugin {
+        padding: 10px !important;
+    }
+
+    .fg_plugin h4 pre {
+        font-size: 11px;
+        line-height: 16px;
+    }
+
+    .fg_plugin .fg {
+        width: 100%; /* Toujours prendre toute la largeur */
+        margin: 8px 0;
+    }
+
+    .fg_plugin .fg_submit {
+        height: 38px;
+        font-size: 14px;
+    }
+
+    .fg_plugin .erreur {
+        font-size: 11px;
+    }
+}
+
+
+
 
 

@@ -39,7 +39,7 @@
         </select>
         <span id=erreur_produit class=erreur></span>
 
-        <select name="livraison" id="livraison"  class="fg">
+        <select name="livraison" id="livraison"  class="fglivraison">
            <option value="" disabled selected>Lieu de livraison</option>																						
             <option value="01-ain">01-ain</option>																						
 	        <option value="02-aisne">02-aisne</option>	
