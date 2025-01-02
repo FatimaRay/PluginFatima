@@ -125,6 +125,10 @@ function fg_soumission_insertion() {
             'body' => json_encode($data),
             'headers' => ['Content-Type' => 'application/json']
         ]);
+        if (is_wp_error($response) || wp_remote_retrieve_response_code($response) !== 200) {
+            error_log('Erreur lors de l\'envoi au middleware : ' . print_r($response, true));
+        }
+        
 
     } else {
         wp_send_json_error(array('message' => 'Requête invalide.'));
@@ -185,26 +189,43 @@ function fg_entrees_page() {
            }
     }
     
+    
 
     // Inclure le fichier de la vue (page_admin.php)
     include plugin_dir_path(__FILE__) . 'Front-end/page_admin.php';
 }
 
 
-add_action('admin_post_filter_prospects', 'fg_filtrer_prospects');
-function fg_filtrer_prospects() {
-    $date_debut = isset($_POST['date_debut']) ? sanitize_text_field($_POST['date_debut']) : '';
-     $date_fin = isset($_POST['date_fin']) ? sanitize_text_field($_POST['date_fin']) : '';
-    
-    // rediriger vers la page avec les dates de filtre dans l'URL
-    $url = add_query_arg(array(
-        'date_debut' => $date_debut,
-        'date_fin' => $date_fin
-    ), admin_url('admin.php?page=fg_entrees'));
 
-    wp_redirect($url);
-    exit;
+
+add_action('admin_post_filter_prospects', 'fg_filtrer_prospects');
+add_action('admin_post_nopriv_filter_prospects', 'fg_filtrer_prospects');
+
+function fg_filtrer_prospects() {
+    // Vérifier si le formulaire a été soumis avec l'action appropriée
+    if (isset($_POST['action']) && $_POST['action'] === 'filter_prospects') {
+        // Récupérer les valeurs des champs de formulaire
+        $date_debut = isset($_POST['date_debut']) ? sanitize_text_field($_POST['date_debut']) : '';
+        $date_fin = isset($_POST['date_fin']) ? sanitize_text_field($_POST['date_fin']) : '';
+
+        // Vérifier si les dates sont vides
+        if (empty($date_debut) && empty($date_fin)) {
+            // Rediriger avec un message d'erreur
+            wp_redirect(add_query_arg('error', 'no_dates', wp_get_referer()));
+            exit;
+        }
+
+        // Rediriger avec les dates de filtre dans l'URL
+        $url = add_query_arg(array(
+            'date_debut' => $date_debut,
+            'date_fin' => $date_fin
+        ), admin_url('admin.php?page=fg_entrees'));
+
+        wp_redirect($url);
+        exit;
+    }
 }
+
 add_action('admin_post_reinitialiser', 'fg_reinitialiser_filtres');
 function fg_reinitialiser_filtres() {
     // Redirection vers la page sans paramètres de date
@@ -220,7 +241,23 @@ function fg_exporter_vers_excel() {
     if  ($_POST['action'] === 'export_excel') {
         require_once plugin_dir_path(__FILE__) . 'vendor/autoload.php';
         global $wpdb;
-        $table_name = $wpdb->prefix . 'fg_entrees';
+        $table_name = $wpdb->prefix . 'fg_entrees';    $export_type = isset($_POST['export_type']) ? sanitize_text_field($_POST['export_type']) : '';
+
+        if ($export_type === 'selected') {
+            // Récupérer les IDs des prospects cochés
+            $prospects_ids = isset($_POST['prospects_ids']) ? array_map('intval', $_POST['prospects_ids']) : [];
+
+            if (!empty($prospects_ids)) {
+                // Préparer la requête pour récupérer les prospects cochés
+                $placeholders = implode(',', array_fill(0, count($prospects_ids), '%d'));
+                $query = "SELECT * FROM $table_name WHERE id IN ($placeholders)";
+                $results = $wpdb->get_results($wpdb->prepare($query, ...$prospects_ids));
+            } else {
+                wp_redirect(admin_url('admin.php?page=fg_entrees&error=no_data'));
+                exit;
+            }
+        }
+        else{
         $date_debut = isset($_POST['date_debut']) ? $_POST['date_debut'] : '';
         $date_fin = isset($_POST['date_fin']) ? $_POST['date_fin'] : '';
         $query = "SELECT * FROM $table_name WHERE 1=1";
@@ -238,7 +275,8 @@ function fg_exporter_vers_excel() {
             wp_redirect(admin_url('admin.php?page=fg_entrees&error=no_data'));
             exit;
         }
-        error_log('Nombre de résultats: ' . count($results));
+        
+        ob_clean();
         // Création du fichier Excel
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
@@ -265,7 +303,10 @@ function fg_exporter_vers_excel() {
             $sheet->setCellValue('H' . $row, $entrees->created_at);
             $sheet->setCellValue('I' . $row, $entrees->gclid);
             $row++;
+        }    
         }
+        // $writer = new Xlsx($spreadsheet);
+        // $filename = $export_type === 'checked' ? 'export_checked_prospects.xlsx' : 'export_all_prospects.xlsx';
         // Génération du fichier Excel
         $filename = 'Prospects_' . date('Y-m-d') . '.xlsx';
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');

@@ -11,6 +11,7 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
     <input type="hidden" name="page" value="fg_entrees">
     <input type="hidden" name="action" value="filter_prospects"> 
     <input type="hidden" name="action" value="reinitialiser">
+    <input type="hidden" name="prospects_export" value="all">
 
     <!-- Champs de date -->
     <label for="date_debut">Start Date:</label>
@@ -30,7 +31,8 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
     <button type="submit" class="supprimer" name="action" value="delete_prospects">
         Déplacer vers la corbeille
     </button>
-    <button type="submit" class="exporter" name="action" value="export_excel">Exporter vers Excel</button><br>
+    <button type="submit" class="exporter" name="action" value="export_excel" onclick="handleExport()">Exporter vers Excel</button><br>
+    <!-- <button type="button" class="exporter" onclick="handleExport()">Exporter vers Excel</button> -->
     <button type="submit" class="reinitialiser" name="action" value="reinitialiser" onclick="resetFilters()">réinitialiser les filtres</button><br><br>
  
     <!-- Table des prospects -->
@@ -106,6 +108,13 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
     </div>
 <?php endif; ?>
 
+<!-- Méssage d'érreur si aucune date n'est entrée pour le filtrre -->
+<?php if (isset($_GET['error']) && $_GET['error'] === 'no_dates') : ?>
+    <div class="notice notice-error is-dismissible">
+        <p>Veuillez sélectionner une plage de date pour le filtre.</p>
+    </div>
+<?php endif; ?>
+
 
 </div>
 
@@ -135,6 +144,47 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
     }
 });
 
+
+document.addEventListener('DOMContentLoaded', function() {
+    const selectAllCheckbox = document.getElementById('select_all');
+    const checkboxes = document.querySelectorAll('input[name="prospects_ids[]"]');
+
+    // Gérer la sélection/désélection de toutes les cases
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            checkboxes.forEach(function(checkbox) {
+                checkbox.checked = selectAllCheckbox.checked;
+            });
+        });
+    }
+
+    // Synchroniser la case "Select All" avec les cases individuelles
+    checkboxes.forEach(function(checkbox) {
+        checkbox.addEventListener('change', function() {
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            const noneChecked = Array.from(checkboxes).every(cb => !cb.checked);
+            selectAllCheckbox.indeterminate = !allChecked && !noneChecked;
+            selectAllCheckbox.checked = allChecked;
+        });
+    });
+});
+
+function handleExport() {
+    const selectedCheckboxes = document.querySelectorAll('input[name="prospects_ids[]"]:checked');
+    const exportTypeInput = document.querySelector('input[name="export_type"]');
+
+    if (selectedCheckboxes.length > 0) {
+        // Si des cases sont cochées, exporter uniquement celles-ci
+        exportTypeInput.value = 'selected';
+    } else {
+        // Sinon, exporter tous les prospects
+        exportTypeInput.value = 'all';
+    }
+
+    // Soumettre le formulaire
+    document.querySelector('form').submit();
+}
+
 function resetFilters() {
         // Supprime les paramètres de l'URL
         const url = new URL(window.location.href);
@@ -144,7 +194,7 @@ function resetFilters() {
         // Recharge la page avec l'URL nettoyée
         window.location.href = url.toString();
 
-    }
+}
 </script>
 <style>
     .supprimer{
