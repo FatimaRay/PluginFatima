@@ -10,8 +10,12 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
     <form method="POST" action="<?php echo admin_url('admin-post.php'); ?>">
     <input type="hidden" name="page" value="fg_entrees">
     <input type="hidden" name="action" value="filter_prospects"> 
-    <input type="hidden" name="action" value="reinitialiser">
-    <input type="hidden" name="prospects_export" value="all">
+    <input type="hidden" name="reset_action" value="reinitialiser">
+    <input type="hidden" name="export_type" id="export_type" value="">
+    <!-- <input type="hidden" name="prospects_ids[]" value="1"> -->
+    <input type="hidden" name="prospects_ids[]" value="2">
+    <?php wp_nonce_field('export_prospects_action', 'export_nonce'); ?>
+
 
     <!-- Champs de date -->
     <label for="date_debut">Start Date:</label>
@@ -170,22 +174,24 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function handleExport() {
+    console.log('Export Excel action triggered');
     const selectedCheckboxes = document.querySelectorAll('input[name="prospects_ids[]"]:checked');
-    const exportTypeInput = document.querySelector('input[name="export_type"]');
+    const exportTypeInput = document.getElementById('export_type');
 
     if (selectedCheckboxes.length > 0) {
-        // Si des cases sont cochées, exporter uniquement celles-ci
         exportTypeInput.value = 'selected';
     } else {
-        // Sinon, exporter tous les prospects
         exportTypeInput.value = 'all';
     }
 
-    // Soumettre le formulaire
+    // Définir explicitement l'action pour l'exportation
+    document.querySelector('form').action = "<?php echo admin_url('admin-post.php?action=export_excel'); ?>";
     document.querySelector('form').submit();
 }
 
+
 function resetFilters() {
+        document.querySelector('input[name="reset_action"]').value = 'reinitialiser';
         // Supprime les paramètres de l'URL
         const url = new URL(window.location.href);
         url.searchParams.delete('date_debut');

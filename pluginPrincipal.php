@@ -238,22 +238,25 @@ function fg_reinitialiser_filtres() {
 // Exportation d'une ou plusieurs lignes vers Excel
 add_action('admin_post_export_excel', 'fg_exporter_vers_excel');
 function fg_exporter_vers_excel() {
+    error_log("Fonction appelée");
     if  ($_POST['action'] === 'export_excel') {
         require_once plugin_dir_path(__FILE__) . 'vendor/autoload.php';
         global $wpdb;
-        $table_name = $wpdb->prefix . 'fg_entrees';    $export_type = isset($_POST['export_type']) ? sanitize_text_field($_POST['export_type']) : '';
+        $table_name = $wpdb->prefix . 'fg_entrees';   
+        $export_type = isset($_POST['export_type']) ? sanitize_text_field($_POST['export_type']) : '';
 
-        if ($export_type === 'selected') {
-            // Récupérer les IDs des prospects cochés
-            $prospects_ids = isset($_POST['prospects_ids']) ? array_map('intval', $_POST['prospects_ids']) : [];
-
-            if (!empty($prospects_ids)) {
-                // Préparer la requête pour récupérer les prospects cochés
-                $placeholders = implode(',', array_fill(0, count($prospects_ids), '%d'));
-                $query = "SELECT * FROM $table_name WHERE id IN ($placeholders)";
-                $results = $wpdb->get_results($wpdb->prepare($query, ...$prospects_ids));
+        if ($_POST['export_type'] === 'selected') {
+            $prospect_ids = $_POST['prospects_ids'] ?? [];
+            if (!empty($prospect_ids)) {
+                // Filtrer les prospects par leurs IDs
+                $placeholders = implode(',', array_fill(0, count($prospect_ids), '%d'));
+                $query = $wpdb->prepare(
+                    "SELECT * FROM {$wpdb->prefix}fg_entrees WHERE id IN ($placeholders)",
+                    $prospect_ids
+                );
+                $results = $wpdb->get_results($query);
             } else {
-                wp_redirect(admin_url('admin.php?page=fg_entrees&error=no_data'));
+                wp_redirect(add_query_arg('error', 'no_data', wp_get_referer()));
                 exit;
             }
         }
@@ -305,7 +308,7 @@ function fg_exporter_vers_excel() {
             $row++;
         }    
         }
-        // $writer = new Xlsx($spreadsheet);
+        // $writer = new Xlsx($spreadsheet);p
         // $filename = $export_type === 'checked' ? 'export_checked_prospects.xlsx' : 'export_all_prospects.xlsx';
         // Génération du fichier Excel
         $filename = 'Prospects_' . date('Y-m-d') . '.xlsx';
