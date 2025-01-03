@@ -169,7 +169,7 @@ function recupererFormulaire() {
                 const redirectionUrl = `https://www.goliat.fr/validation-form/?email=${encodeURIComponent(email)}&tel=${encodeURIComponent(tel)}&Lieu-livraison=${encodeURIComponent(livraison)}&gclid=${encodeURIComponent(gclid)}`;   
                 // Rediriger l'utilisateur
                 window.location.href = redirectionUrl;
-            }, 500); // Redirection après 500ms ou ajustez selon votre besoin
+            }, 50); // Redirection après 500ms ou ajustez selon votre besoin
 
         }
     })
