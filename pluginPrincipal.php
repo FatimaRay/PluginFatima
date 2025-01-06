@@ -184,7 +184,7 @@ function fg_entrees_page() {
             if($date_debut>$date_fin){
                 $error_message = 'Veuillez entrer une date de fin Supérieure ou Egale à la date de debut.';
             }
-            else if (($date_debut<$date_fin)and empty($results)) {
+            else if (empty($results)) {
                 $error_message = 'Aucun prospect trouvé dans la plage de dates sélectionnée.';
            }
     }
