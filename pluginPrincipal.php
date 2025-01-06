@@ -184,7 +184,7 @@ function fg_entrees_page() {
             if($date_debut>$date_fin){
                 $error_message = 'Veuillez entrer une date de fin Supérieure ou Egale à la date de debut.';
             }
-            else if (empty($results)) {
+            else if (($date_debut<$date_fin)and empty($results)) {
                 $error_message = 'Aucun prospect trouvé dans la plage de dates sélectionnée.';
            }
     }
@@ -237,32 +237,48 @@ function fg_reinitialiser_filtres() {
 
 // Exportation d'une ou plusieurs lignes vers Excel
 add_action('admin_post_export_excel', 'fg_exporter_vers_excel');
-function fg_exporter_vers_excel() {
-    error_log("Fonction appelée");
-    if  ($_POST['action'] === 'export_excel') {
-        require_once plugin_dir_path(__FILE__) . 'vendor/autoload.php';
-        global $wpdb;
-        $table_name = $wpdb->prefix . 'fg_entrees';   
-        $export_type = isset($_POST['export_type']) ? sanitize_text_field($_POST['export_type']) : '';
 
-        if ($_POST['export_type'] === 'selected') {
-            $prospect_ids = $_POST['prospects_ids'] ?? [];
-            if (!empty($prospect_ids)) {
-                // Filtrer les prospects par leurs IDs
-                $placeholders = implode(',', array_fill(0, count($prospect_ids), '%d'));
-                $query = $wpdb->prepare(
-                    "SELECT * FROM {$wpdb->prefix}fg_entrees WHERE id IN ($placeholders)",
-                    $prospect_ids
-                );
-                $results = $wpdb->get_results($query);
-            } else {
-                wp_redirect(add_query_arg('error', 'no_data', wp_get_referer()));
-                exit;
-            }
+function fg_exporter_vers_excel() {
+    // Debugging log
+    error_log('Exportation déclenchée');
+    error_log(print_r($_POST, true));
+
+    // Vérification du nonce
+    if (!isset($_POST['export_nonce']) || !wp_verify_nonce($_POST['export_nonce'], 'export_prospects_action')) {
+        wp_die('Requête non autorisée.');
+    }
+
+    require_once plugin_dir_path(__FILE__) . 'vendor/autoload.php';
+
+    if (!class_exists('\PhpOffice\PhpSpreadsheet\Spreadsheet')) {
+        error_log('PhpSpreadsheet n’est pas chargé');
+        wp_die('Erreur : PhpSpreadsheet n’est pas disponible.');
+    }
+
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'fg_entrees';
+
+    // Déterminer le type d'exportation
+    $export_type = isset($_POST['export_type']) ? sanitize_text_field($_POST['export_type']) : '';
+
+    if ($export_type === 'selected') {
+        // Exporter les prospects sélectionnés
+        $prospect_ids = isset($_POST['prospects_ids']) ? array_map('intval', $_POST['prospects_ids']) : [];
+        if (!empty($prospect_ids)) {
+            $placeholders = implode(',', array_fill(0, count($prospect_ids), '%d'));
+            $query = $wpdb->prepare(
+                "SELECT * FROM {$table_name} WHERE id IN ($placeholders)",
+                $prospect_ids
+            );
+            $results = $wpdb->get_results($query);
+        } else {
+            wp_redirect(add_query_arg('error', 'no_data', wp_get_referer()));
+            exit;
         }
-        else{
-        $date_debut = isset($_POST['date_debut']) ? $_POST['date_debut'] : '';
-        $date_fin = isset($_POST['date_fin']) ? $_POST['date_fin'] : '';
+    } else {
+        // Exporter tous les prospects ou par date
+        $date_debut = isset($_POST['date_debut']) ? sanitize_text_field($_POST['date_debut']) : '';
+        $date_fin = isset($_POST['date_fin']) ? sanitize_text_field($_POST['date_fin']) : '';
         $query = "SELECT * FROM $table_name WHERE 1=1";
         if ($date_debut) {
             $query .= $wpdb->prepare(" AND created_at >= %s", $date_debut . ' 00:00:00');
@@ -272,55 +288,48 @@ function fg_exporter_vers_excel() {
         }
         $query .= " ORDER BY created_at DESC LIMIT 200";
         $results = $wpdb->get_results($query);
+    }
 
-        if (empty($results)) {
-            // Redirection avec un message d'erreur
-            wp_redirect(admin_url('admin.php?page=fg_entrees&error=no_data'));
-            exit;
-        }
-        
-        ob_clean();
-        // Création du fichier Excel
-        $spreadsheet = new Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
-        // // Ajout d'en-têtes au sheet
-        $sheet->setCellValue('A1', '#');
-        $sheet->setCellValue('B1', 'Statut');
-        $sheet->setCellValue('C1', 'Nom');
-        $sheet->setCellValue('D1', 'Téléphone');
-        $sheet->setCellValue('E1', 'Email');
-        $sheet->setCellValue('F1', 'Produit');
-        $sheet->setCellValue('G1', 'Lieu de livraison');
-        $sheet->setCellValue('H1', 'Date de création');
-        $sheet->setCellValue('I1', 'gclig_field');
-        // Insertion des données dans le sheet
-        $row = 2;
-        foreach ($results as $entrees) {
-            $sheet->setCellValue('A' . $row, $entrees->id);
-            $sheet->setCellValue('B' . $row, $entrees->statut);
-            $sheet->setCellValue('C' . $row, $entrees->nom);
-            $sheet->setCellValue('D' . $row, $entrees->telephone);
-            $sheet->setCellValue('E' . $row, $entrees->email);
-            $sheet->setCellValue('F' . $row, $entrees->produit);
-            $sheet->setCellValue('G' . $row, $entrees->livraison);
-            $sheet->setCellValue('H' . $row, $entrees->created_at);
-            $sheet->setCellValue('I' . $row, $entrees->gclid);
-            $row++;
-        }    
-        }
-        // $writer = new Xlsx($spreadsheet);p
-        // $filename = $export_type === 'checked' ? 'export_checked_prospects.xlsx' : 'export_all_prospects.xlsx';
-        // Génération du fichier Excel
-        $filename = 'Prospects_' . date('Y-m-d') . '.xlsx';
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="' . $filename . '"');
-        header('Cache-Control: max-age=0');
-        $writer = new Xlsx($spreadsheet);
-        $writer->save('php://output');
+    if (empty($results)) {
+        wp_redirect(add_query_arg('error', 'no_data', wp_get_referer()));
         exit;
     }
-       
+
+    // Génération du fichier Excel
+    $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+    $sheet = $spreadsheet->getActiveSheet();
+    $sheet->fromArray(
+        ['#', 'Statut', 'Nom', 'Téléphone', 'Email', 'Produit', 'Lieu de livraison', 'Date de création', 'gclid'], 
+        null, 
+        'A1'
+    );
+
+    $row = 2;
+    foreach ($results as $entree) {
+        $sheet->fromArray((array)$entree, null, "A$row");
+        $row++;
+    }
+
+    if (ob_get_contents()) {
+        ob_end_clean();
+    }
+    
+    $date = date('Y-m-d');
+    if ($export_type === 'selected') {
+      $nb_elements = count($results); // Compter le nombre d'éléments sélectionnés
+      $filename = "Prospects_{$nb_elements}Prospect(s)_{$date}.xlsx";
+    } else {
+       $filename = "Prospects_{$date}.xlsx";
+    }
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header('Content-Disposition: attachment;filename="' . $filename . '"');
+    header('Cache-Control: max-age=0');
+
+    $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+    $writer->save('php://output');
+    exit;
 }
+
 
 // Exportation d'une seule ligne vers excel
 add_action('admin_post_export_prospect_single', 'export_prospect_single');

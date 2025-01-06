@@ -7,19 +7,19 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 <div class="wrap">
     <h1>Prospects</h1><br><br>
 
-    <form method="POST" action="<?php echo admin_url('admin-post.php'); ?>">
+    <form method="post" action="<?php echo admin_url('admin-post.php?action=export_excel'); ?>">
     <input type="hidden" name="page" value="fg_entrees">
     <input type="hidden" name="action" value="filter_prospects"> 
     <input type="hidden" name="reset_action" value="reinitialiser">
     <input type="hidden" name="export_type" id="export_type" value="">
-    <!-- <input type="hidden" name="prospects_ids[]" value="1"> -->
+    <input type="hidden" name="export_nonce" value="<?php echo wp_create_nonce('export_prospects_action'); ?>">
     <input type="hidden" name="prospects_ids[]" value="2">
-    <?php wp_nonce_field('export_prospects_action', 'export_nonce'); ?>
+
 
 
     <!-- Champs de date -->
     <label for="date_debut">Start Date:</label>
-    <input type="date" id="date_debut" name="date_debut"
+    <input type="date" id="date_debut" name="date_debut" 
            value="<?php 
                       echo isset($_GET['date_debut']) ? esc_attr($_GET['date_debut']) : ''; 
                     ?>">
@@ -173,8 +173,9 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+
 function handleExport() {
-    console.log('Export Excel action triggered');
+    console.log('Fonction appelée');
     const selectedCheckboxes = document.querySelectorAll('input[name="prospects_ids[]"]:checked');
     const exportTypeInput = document.getElementById('export_type');
 
@@ -189,7 +190,7 @@ function handleExport() {
     document.querySelector('form').submit();
 }
 
-
+// Réinitialiser les filtres
 function resetFilters() {
         document.querySelector('input[name="reset_action"]').value = 'reinitialiser';
         // Supprime les paramètres de l'URL
@@ -201,6 +202,58 @@ function resetFilters() {
         window.location.href = url.toString();
 
 }
+
+// Mettre les valeurs maximales de date_debut et date_fin à la date du jour
+document.addEventListener("DOMContentLoaded", function () {
+    const today = new Date().toISOString().split("T")[0];
+    document.getElementById("date_debut").setAttribute("max", today);
+    document.getElementById("date_fin").setAttribute("max", today);
+});
+
+// Réinitialiser les valeurs de date_fin lorsque la valeur de date_debut est entrée
+document.addEventListener("DOMContentLoaded", function () {
+    const dateDebut = document.getElementById("date_debut");
+    const dateFin = document.getElementById("date_fin");
+
+    // Lorsqu'une date de début est sélectionnée
+    dateDebut.addEventListener("change", function () {
+        const selectedDate = dateDebut.value;
+        if (selectedDate) {
+            // Définir la date minimale pour le champ de date de fin
+            dateFin.setAttribute("min", selectedDate);
+        }
+    });
+});
+
+// Empecher que l'utilisateur entre un mois supérieur à 12
+document.addEventListener("DOMContentLoaded", function () {
+    const dateDebut = document.getElementById("date_debut");
+    const dateFin = document.getElementById("date_fin");
+
+    // Fonction pour valider le mois
+    function validateMonth(input) {
+        const dateValue = input.value;
+        if (dateValue) {
+            const [year, month] = dateValue.split("-"); // Extraire l'année et le mois
+            if (parseInt(month) > 12) {
+                alert("Le mois ne peut pas être supérieur à 12.");
+                input.value = ""; // Réinitialiser le champ
+            }
+        }
+    }
+
+    // Ajouter la validation sur le champ date_debut
+    dateDebut.addEventListener("change", function () {
+        validateMonth(dateDebut);
+    });
+
+    // Ajouter la validation sur le champ date_fin
+    dateFin.addEventListener("change", function () {
+        validateMonth(dateFin);
+    });
+});
+
+ 
 </script>
 <style>
     .supprimer{
