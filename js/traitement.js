@@ -4,51 +4,83 @@ document.getElementById('fg_form').addEventListener('submit', function(event) {
     recupererFormulaire(); // Appeler la bonne fonction
 });
 
-// Ajouter l'attribut draggable aux champs du formulaire
-// document.addEventListener("DOMContentLoaded", function () {
-//     const draggables = document.querySelectorAll(".fg");
-//     const dropZone = document.querySelector(".fg_plugin");
+// Ajout de l'attribut draggable aux champs du formulaire
+document.addEventListener("DOMContentLoaded", function () {
+    const draggables = document.querySelectorAll(".fg"); // Tous les champs draggables
+    const dropZone = document.querySelector(".fg_plugin"); // Zone de dépôt
 
-//     // Rendre les champs "draggables"
-//     draggables.forEach(item => {
-//         item.setAttribute("draggable", true);
+    // Rendre les champs "draggables"
+    draggables.forEach(item => {
+        item.setAttribute("draggable", true);
 
-//         // Déclencher lors du début du drag
-//         item.addEventListener("dragstart", (event) => {
-//             event.dataTransfer.setData("text/plain", event.target.id);
-//             event.target.classList.add("dragging");
-//         });
+        // Début du drag
+        item.addEventListener("dragstart", (event) => {
+            event.dataTransfer.setData("text/plain", event.target.id);
+            event.target.classList.add("dragging");
+        });
 
-//         // Supprimer la classe lors de la fin
-//         item.addEventListener("dragend", (event) => {
-//             event.target.classList.remove("dragging");
-//         });
-//     });
+        // Fin du drag
+        item.addEventListener("dragend", () => {
+            item.classList.remove("dragging");
+        });
+    });
 
-//     // Zone de dépôt
-//     dropZone.addEventListener("dragover", (event) => {
-//         event.preventDefault();
-//         dropZone.classList.add("drag-over");
-//     });
+    // Zone de dépôt
+    dropZone.addEventListener("dragover", (event) => {
+        event.preventDefault(); // Empêche le comportement par défaut
+    });
 
-//     dropZone.addEventListener("dragleave", () => {
-//         dropZone.classList.remove("drag-over");
-//     });
+    // Gestion du drag-and-drop pour les champs input et select
+    const inputsAndSelects = document.querySelectorAll('#fg_form input, #fg_form select');
 
-//     dropZone.addEventListener("drop", (event) => {
-//         event.preventDefault();
-//         dropZone.classList.remove("drag-over");
+    inputsAndSelects.forEach(item => {
+        item.addEventListener("dragover", (event) => {
+            event.preventDefault(); // Empêche le comportement par défaut
+        });
 
-//         const draggableId = e.dataTransfer.getData("text");
-//         const draggedElement = document.getElementById(draggableId);
+        item.addEventListener("drop", (event) => {
+            event.preventDefault(); // Empêche le comportement par défaut
+            const draggableId = event.dataTransfer.getData("text/plain");
+            const draggedElement = document.getElementById(draggableId);
+        
+            // Échanger les éléments
+            if (draggedElement && draggedElement !== item) {
+                const parent = draggedElement.parentNode;
+        
+                // Obtenir les index des éléments
+                const draggedIndex = Array.from(parent.children).indexOf(draggedElement);
+                const targetIndex = Array.from(parent.children).indexOf(item);
+        
+                // Échanger les éléments
+                if (targetIndex > draggedIndex) {
+                    parent.insertBefore(draggedElement, item.nextSibling);
+                    parent.insertBefore(item, parent.children[draggedIndex]);
+                } else {
+                    parent.insertBefore(item, draggedElement);
+                    parent.insertBefore(draggedElement, parent.children[targetIndex]);
+                }
+        
+                // Réinitialiser les validations
+                resetValidation();
+            }
+        });
+    });
 
-//         // Réorganiser les éléments dans la zone de dépôt
-//         if (draggedElement && dropZone.contains(draggedElement)) {
-//             dropZone.appendChild(draggedElement);
-//         }
-//     });
-// });
-
+    // Fonction pour réinitialiser les validations
+    function resetValidation() {
+        const requiredFields = ['statut', 'email', 'produit']; // Ajoutez ici tous les champs obligatoires
+        requiredFields.forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (field) {
+                field.required = true; // Réaffecter le champ comme obligatoire
+                const errorDiv = document.querySelector(`#erreur_${fieldId}`);
+                if (errorDiv) {
+                    errorDiv.textContent = ''; // Réinitialiser le message d'erreur
+                }
+            }
+        });
+    }
+});
 
 function validateEmail(email) {
     var regex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
@@ -66,7 +98,6 @@ function recupererFormulaire() {
     var livraison = document.getElementById('livraison').value;
     var gclid = document.getElementById('gclid').value;
 
-
     // Vérification des champs requis
     var erreurs = {};
     var message_global="";
@@ -79,7 +110,6 @@ function recupererFormulaire() {
     } else if (!validateEmail(email)) {
         erreurs.email = "Cet e-mail n'est pas valide";
     }
-
     if (!produit) {
         erreurs.produit = "Ce champ est obligatoire";
     }
@@ -90,25 +120,20 @@ function recupererFormulaire() {
         document.getElementById('erreur_statut').textContent = erreurs.statut || '';
         document.getElementById('erreur_produit').textContent = erreurs.produit || '';
 
-         // Agrandir le formulaire
-       var formContainer = document.querySelector('.fg_plugin');
-       formContainer.classList.add('enlarged');
-       document.getElementById("message_global").innerHTML = "Veuillez corriger les erreurs avant d\'envoyer ce formulaire";
+        // Agrandir le formulaire
+        var formContainer = document.querySelector('.fg_plugin');
+        formContainer.classList.add('enlarged');
+        document.getElementById("message_global").innerHTML = "Veuillez corriger les erreurs avant d\'envoyer ce formulaire";
 
         return; // Arrêter l'envoi du formulaire si erreurs
     }
 
-    // function validateEmail(email) {
-    //     var regex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
-    //     return regex.test(email);
-    // }
     // Désactiver le bouton de soumission
     var boutonSubmit = document.querySelector('.fg_submit');
     boutonSubmit.disabled = true;
     boutonSubmit.value = "en cours de traitement...";
-    
-    // Créer un objet FormData avec les valeurs du formulaire
 
+    // Créer un objet FormData avec les valeurs du formulaire
     var formData = new FormData();
     formData.append('email', email);
     formData.append('statut', statut);
@@ -117,11 +142,10 @@ function recupererFormulaire() {
     formData.append('telephone', telephone);
     formData.append('livraison', livraison);
     formData.append('gclid', gclid);
-
     formData.append('action', 'submit'); // Identifiant pour l'action AJAX
 
     // Faire la requête AJAX avec fetch
-    fetch(ajax_object.ajax_url, {  // ajaxurl est une variable définie dans WordPress pour gérer AJAX
+    fetch(ajax_object.ajax_url, {
         method: 'POST',
         body: formData
     })
@@ -147,30 +171,25 @@ function recupererFormulaire() {
             formContainer.classList.remove('enlarged');
 
             // Reduire la taille du formulaire lorsque le message de succès s'affiche
-            var formContainer = document.querySelector('.fg_plugin'); 
             formContainer.classList.add('reduced'); // Ajouter la classe pour réduire la taille
 
-
             // Afficher le titre et le message de succès
-            var titre = document.getElementById('titre_formulaire'); // Assurez-vous que le titre a cet ID
+            var titre = document.getElementById('titre_formulaire');
             titre.style.display = 'block'; // Afficher le titre
-            document.getElementById('message_global').textContent = data.message_global || "Formulaire envoyé avec succès !";
+            document.getElementById('message_global').textContent = (data.message_global || "Formulaire envoyé avec succès !") + " 🎉";
 
-
-// Après la soumission et si tout est valide, rediriger vers l'URL personnalisée
-             setTimeout(() => {
-                // Récupérer les valeurs des champs
+            // Après la soumission et si tout est valide, rediriger vers l'URL personnalisée
+            setTimeout(() => {
                 const email = document.getElementById('email').value;
                 const tel = document.getElementById('telephone').value;
-                const Livraison = document.getElementById('livraison').value;
-                const gclid=document.getElementById('gclid').value;
+                const livraison = document.getElementById('livraison').value;
+                const gclid = document.getElementById('gclid').value;
 
                 // Construire l'URL de redirection avec les paramètres
-                const redirectionUrl = `https://www.goliat.fr/validation-form/?email=${encodeURIComponent(email)}&tel=${encodeURIComponent(tel)}&Lieu-livraison=${encodeURIComponent(livraison)}&gclid=${encodeURIComponent(gclid)}`;   
+                const redirectionUrl = `https://www.goliat.fr/validation-form/?email=${encodeURIComponent(email)}&tel=${encodeURIComponent(tel)}&Lieu-livraison=${encodeURIComponent(livraison)}&gclid=${encodeURIComponent(gclid)}`;
                 // Rediriger l'utilisateur
                 window.location.href = redirectionUrl;
             }, 50); // Redirection après 500ms ou ajustez selon votre besoin
-
         }
     })
     .catch(error => {
@@ -200,8 +219,8 @@ function validerChamps(statut, email, produit) {
     }
     return erreurs;
 }
-//gestion de la disparition des messages d'érreur lorsque l'utilisateur corrige les valeurs du champs
-// Validation des champs lors de la modification
+
+// Gestion de la disparition des messages d'erreur lorsque l'utilisateur corrige les valeurs du champ
 const inputs = document.querySelectorAll('#fg_form input, #fg_form select');
 inputs.forEach(input => {
     input.addEventListener('input', function() {
@@ -211,7 +230,7 @@ inputs.forEach(input => {
         }
 
         // Vérifier si tous les champs sont valides avant de masquer le message global
-        const erreurs = validerChamps(  // Utiliser ta fonction de validation avec les valeurs courantes
+        const erreurs = validerChamps(
             document.getElementById('statut').value,
             document.getElementById('email').value,
             document.getElementById('produit').value
@@ -223,13 +242,10 @@ inputs.forEach(input => {
         }
     });
 });
-// Remplissage automatique du champs caché avec la valeur du paramètre gclid sur le navigateur si il existe
-// Attendre que le DOM soit complètement chargé
+
+// Remplissage automatique du champ caché avec la valeur du paramètre gclid sur le navigateur si il existe
 document.addEventListener("DOMContentLoaded", function() {
-    // Récupérer les paramètres de l'URL
     const urlParams = new URLSearchParams(window.location.search);
-    
-    // Vérifier si le paramètre "gclid" existe dans l'URL
     const gclid = urlParams.get('gclid'); // Récupère "gclid" dans l'URL
     
     // Si le paramètre existe, le mettre dans le champ caché
@@ -243,8 +259,3 @@ document.addEventListener("DOMContentLoaded", function() {
     // Afficher la valeur actuelle du champ caché pour vérification
     console.log("Valeur actuelle du champ caché :", document.querySelector('input[name="gclid"]').value);
 });
-
-
-
-
-

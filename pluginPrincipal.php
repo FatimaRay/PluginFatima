@@ -6,7 +6,7 @@
 /*
 Plugin Name: FormulaireGoliat
 Description: Un plugin pour la collecte des prospects
-Version: 1.0
+Version: 2.0
 Author: GOLIAT Cameroun
 */
 
@@ -74,29 +74,37 @@ register_activation_hook(__FILE__, 'fg_create_database_table');
 // Insertion dans BD
 function fg_soumission_insertion() { 
     global $wpdb;
+
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        // Récupérer les données envoyées via POST
-        $statut = isset($_POST['statut']) ? sanitize_text_field($_POST['statut']) : '';
-        $nom = isset($_POST['nom']) ? sanitize_text_field($_POST['nom']) : '';
-        $telephone = isset($_POST['telephone']) ? sanitize_text_field($_POST['telephone']) : '';
-        $email = isset($_POST['email']) ? sanitize_email($_POST['email']) : '';
-        $produit = isset($_POST['produit']) ? sanitize_text_field($_POST['produit']) : '';
-        $livraison = isset($_POST['livraison']) ? sanitize_text_field($_POST['livraison']) : '';
-        $gclid = isset($_POST['gclid']) ? sanitize_text_field($_POST['gclid']) : '';
+        // Récupérer et nettoyer les données envoyées via POST
+        $statut     = isset($_POST['statut']) ? sanitize_text_field($_POST['statut']) : '';
+        $nom        = isset($_POST['nom']) ? sanitize_text_field($_POST['nom']) : '';
+        $telephone  = isset($_POST['telephone']) ? sanitize_text_field($_POST['telephone']) : '';
+        $email      = isset($_POST['email']) ? sanitize_email($_POST['email']) : '';
+        $produit    = isset($_POST['produit']) ? sanitize_text_field($_POST['produit']) : '';
+        $livraison  = isset($_POST['livraison']) ? sanitize_text_field($_POST['livraison']) : '';
+        $gclid      = isset($_POST['gclid']) ? sanitize_text_field($_POST['gclid']) : '';
+
+        // Préparer les données pour l'insertion et l'envoi au middleware
+        $data = array(
+            'statut'     => $statut,
+            'nom'        => $nom,
+            'telephone'  => $telephone,
+            'email'      => $email,
+            'produit'    => $produit,
+            'livraison'  => $livraison,
+            'gclid'      => $gclid,
+            'created_at' => current_time('mysql') // Ajoute la date et l'heure actuelle
+        );
+
+        // Log des données reçues
+        error_log('Données du formulaire reçues: ' . json_encode($data));
 
         // Insérer les données dans la table
         $table_name = $wpdb->prefix . 'fg_entrees';
-        $insertion=$wpdb->insert(
+        $insertion = $wpdb->insert(
             $table_name,
-           $data=array(
-                'statut' => $statut,
-                'nom' => $nom,
-                'telephone' => $telephone,
-                'email' => $email,
-                'produit' => $produit,
-                'livraison' => $livraison,
-                'gclid' => $gclid,
-            ),
+            $data,
             array(
                 '%s',
                 '%s',
@@ -105,33 +113,80 @@ function fg_soumission_insertion() {
                 '%s',
                 '%s',
                 '%s',
+                '%s' // Pour 'created_at'
             )
         );
 
-         wp_send_json_success(array('message' => 'Données enregistrées avec succès.'));
+        if ($insertion === false) {
+            error_log('Erreur lors de l\'insertion des données dans la base de données.');
+            wp_send_json_error(array('message' => 'Erreur lors de l\'insertion des données.'));
+            exit;
+        } else {
+            error_log('Données insérées avec succès dans la base de données.');
+        }
 
-        //  Envoi du prospect dans la boite mail de goliat
+        // Envoi du prospect dans la boîte mail de Goliat
         $to = 'info@goliat.fr';
         $subject = 'Nouveau prospect';
-        $message = sprintf("Statut: %s\nNom: %s\nTéléplone: %s\nEmail: %s\nProduit: %s\nLieu de livraison: %s\ngclid: %s",
-        $data['statut'], $data['nom'], $data['telephone'], $data['email'], $data['produit'], $data['livraison'], $data['gclid']);
+        $message = sprintf(
+            "Statut: %s\nNom: %s\nTéléphone: %s\nEmail: %s\nProduit: %s\nLieu de livraison: %s\ngclid: %s",
+            $data['statut'], 
+            $data['nom'], 
+            $data['telephone'], 
+            $data['email'], 
+            $data['produit'], 
+            $data['livraison'], 
+            $data['gclid']
+        );
         $mail_sent = wp_mail($to, $subject, $message);
         if (!$mail_sent) {
-            error_log('Erreur lors de l\'envoi de l\'email : ' . print_r($wpdb->last_error, true));
+            error_log('Erreur lors de l\'envoi de l\'email.');
+        } else {
+            error_log('Email envoyé avec succès.');
         }
 
-        // Envoi au middleware
-        $response = wp_remote_post('https://example.com/api', [
-            'body' => json_encode($data),
-            'headers' => ['Content-Type' => 'application/json']
+        // Ajoutez vos identifiants Basic Auth ici
+        $basic_auth_user = 'admin';
+        $basic_auth_pass = 'adminpass';
+        $basic_auth = base64_encode($basic_auth_user . ':' . $basic_auth_pass);
+
+        // Définir l'URL du middleware
+        // Si WordPress et le middleware ne sont pas sur le même serveur, remplacez 'localhost' par l'adresse IP ou le nom d'hôte approprié
+        $middleware_url = 'https://middlewareodoo.goliat.fr/submit-form'; // Remplacez par l'URL correcte si nécessaire
+
+        // Log de l'URL du middleware
+        error_log('URL du middleware: ' . $middleware_url);
+
+        // Envoi au middleware avec les en-têtes d'authentification
+        $response = wp_remote_post($middleware_url, [
+            'body'    => json_encode($data),
+            'headers' => [
+                'Content-Type'  => 'application/json',
+                'Authorization' => 'Basic ' . $basic_auth
+            ],
+            'timeout' => 10 // Temps d'attente en seconde
         ]);
-        if (is_wp_error($response) || wp_remote_retrieve_response_code($response) !== 200) {
-            error_log('Erreur lors de l\'envoi au middleware : ' . print_r($response, true));
-        }
-        
 
+        // Ajout de logs pour le débogage
+        error_log('Données envoyées au middleware: ' . json_encode($data));
+
+        if (is_wp_error($response)) {
+            error_log('Erreur lors de l\'envoi au middleware: ' . $response->get_error_message());
+            wp_send_json_error(array('message' => 'Erreur lors de l\'envoi au middleware.'));
+            exit;
+        } else {
+            $middleware_response = wp_remote_retrieve_body($response);
+            error_log('Réponse du middleware: ' . $middleware_response);
+            // Optionnel : Vérifiez le contenu de la réponse du middleware
+            // Vous pouvez analyser $middleware_response si nécessaire
+        }
+
+        // Envoyer la réponse JSON après toutes les opérations
+        wp_send_json_success(array('message' => 'Données enregistrées avec succès.'));
+        exit;
     } else {
         wp_send_json_error(array('message' => 'Requête invalide.'));
+        exit;
     }
 }
 
@@ -139,7 +194,8 @@ add_action('wp_ajax_submit', 'fg_soumission_insertion');
 add_action('wp_ajax_nopriv_submit', 'fg_soumission_insertion');
 
 
-// Ajouter la page de menu dans le tableau d'administration de WordPress
+
+// Ajouter la page de menu dans le tableau d'administration de Wordpress
 add_action('admin_menu', 'fg_admin_menu');
 function fg_admin_menu() {
     add_menu_page(
@@ -184,7 +240,7 @@ function fg_entrees_page() {
             if($date_debut>$date_fin){
                 $error_message = 'Veuillez entrer une date de fin Supérieure ou Egale à la date de debut.';
             }
-            else if (empty($results)) {
+            else if (($date_debut<$date_fin)and empty($results)) {
                 $error_message = 'Aucun prospect trouvé dans la plage de dates sélectionnée.';
            }
     }
@@ -317,7 +373,7 @@ function fg_exporter_vers_excel() {
     $date = date('Y-m-d');
     if ($export_type === 'selected') {
       $nb_elements = count($results); // Compter le nombre d'éléments sélectionnés
-      $filename = "Prospects_{$nb_elements}Prospect(s)_{$date}.xlsx";
+      $filename = "{$nb_elements}Prospects_$date.xlsx";
     } else {
        $filename = "Prospects_{$date}.xlsx";
     }

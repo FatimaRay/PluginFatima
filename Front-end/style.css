@@ -4,7 +4,7 @@
     padding: 20px !important;          
     width: 100%;
     max-width: 480px;
-    height: auto;  
+    height: 570px;  
     margin: 0 auto;        
     background-color: #FFFFFF;
     align-items: center;
@@ -37,7 +37,7 @@
 }
 .fg_plugin .fg{
     margin-left: 10px !important;
-    margin-top: 2% !important;
+    margin-top: 3% !important;
     width: 100%; /* Prend toute la largeur disponible */
     max-width: 420px; /* Limite la largeur maximale */
     height: 40px !important;
@@ -45,11 +45,11 @@
 }
 .fglivraison{
     margin-left: 10px !important;
-    margin-top: 4% !important;
-    width: 100%; /* Prend toute la largeur disponible */
-    max-width: 420px; /* Limite la largeur maximale */
+    margin-top: 5% !important;
+    width: 100%; 
+    max-width: 420px; 
     height: 40px !important;
-    margin: 10px auto; /*Centrage et espace entre les éléments*/
+    margin: 10px auto;
 }
 body{
     background-color: #333;
@@ -74,18 +74,21 @@ body{
     color:red !important;
     margin-left: 12px !important; 
 }
-/* .fg_plugin .draggable {
-    cursor: grab; */
-    /* background-color: #f1f1f1;
-    border: 1px dashed #ccc;
+.fg_plugin .draggable {
+    cursor: grab; 
+     /* background-color: #f1f1f1; */
+    /* border: 1px dashed #ccc; */
      padding: 10px; 
-    margin: 5px 0;  */
-
-
-/* .fg_plugin .drag-over {
+    margin: 5px 0; 
+    /* opacity: 0.5; */
+}
+.fg_plugin .drag-over {
     background-color: #e8faff;
-    border: 2px dashed #2ecc71;
-} */
+    border: 2px dashed #000;
+}
+.dragging {
+    opacity: 0.5; 
+}
 
 /* Styles pour écrans de petite taille */
 @media (max-width: 768px) {
